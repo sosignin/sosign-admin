@@ -9,47 +9,50 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loginMode, setLoginMode] = useState("admin"); // "admin" or "subadmin"
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      
+      const endpoint = loginMode === "admin" ? "/api/admin/login" : "/api/subadmin/login";
+
       const res = await fetch(
-        `${apiUrl}/api/admin/login`,
+        `${apiUrl}${endpoint}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // ✅ important to send/receive cookies
+          credentials: "include",
           body: JSON.stringify({ email, password }),
         }
       );
 
-      // Check if response is JSON
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error("Expected JSON response but got:", contentType);
         setError("Server error: Invalid response format");
+        setIsLoading(false);
         return;
       }
 
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Redirect to dashboard after successful login
         router.push("/dashboard");
       } else {
-        // ❌ Show backend error message
         setError(data.message || "Login failed");
       }
     } catch (err) {
-      // 🔹 Network or unexpected errors
       console.error(err);
       setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,18 +69,48 @@ export default function LoginPage() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16"></div>
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-green-500/10 to-blue-500/10 rounded-full translate-y-12 -translate-x-12"></div>
           {/* Logo/Header */}
-          <div className="text-center mb-8 relative z-10">
+          <div className="text-center mb-6 relative z-10">
             <div className="relative inline-block">
               <div 
                 className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-                <i className="fas fa-lock text-white text-2xl relative z-10"></i>
+                <i className={`fas ${loginMode === "admin" ? "fa-lock" : "fa-user-shield"} text-white text-2xl relative z-10`}></i>
               </div>
               <div className="absolute -inset-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur opacity-20"></div>
             </div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">Admin Portal</h2>
             <p className="text-gray-600 font-medium">Sign in to access your dashboard</p>
+          </div>
+
+          {/* Login Mode Toggle */}
+          <div className="relative z-10 mb-6">
+            <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => { setLoginMode("admin"); setError(""); }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                  loginMode === "admin"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-[1.02]"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
+              >
+                <i className="fas fa-crown text-xs"></i>
+                Super Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => { setLoginMode("subadmin"); setError(""); }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                  loginMode === "subadmin"
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg transform scale-[1.02]"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
+              >
+                <i className="fas fa-user-shield text-xs"></i>
+                Sub-Admin
+              </button>
+            </div>
           </div>
 
           {/* Error message */}
@@ -148,11 +181,25 @@ export default function LoginPage() {
             {/* Submit button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-xl hover:from-blue-600 hover:to-blue-700 hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group"
+              disabled={isLoading}
+              className={`w-full py-4 px-6 rounded-xl font-semibold text-lg shadow-xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group ${
+                loginMode === "admin"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                  : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+              } ${isLoading ? "opacity-70 cursor-not-allowed" : "hover:shadow-2xl"}`}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
-                <i className="fas fa-sign-in-alt"></i>
-                Sign In
+                {isLoading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Signing In...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-sign-in-alt"></i>
+                    {loginMode === "admin" ? "Sign In as Super Admin" : "Sign In as Sub-Admin"}
+                  </>
+                )}
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </button>

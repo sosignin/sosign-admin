@@ -50,86 +50,126 @@ export default function DashboardLayout({ children }) {
         }
     };
 
-    const navItems = [
+    const allNavItems = [
         {
             name: "Dashboard",
             href: "/dashboard",
             icon: "fas fa-home",
             color: "from-blue-500 to-blue-600",
+            permissionKey: "dashboard",
         },
         {
             name: "Petition Approval",
             href: "/dashboard/petition-approval",
             icon: "fas fa-check-circle",
             color: "from-green-500 to-green-600",
+            permissionKey: "petition-approval",
         },
         {
             name: "Comment Approval",
             href: "/dashboard/comment-approval",
             icon: "fas fa-comments",
             color: "from-orange-500 to-orange-600",
+            permissionKey: "comment-approval",
         },
         {
             name: "All Petitions",
             href: "/dashboard/petitions",
             icon: "fas fa-file-alt",
             color: "from-purple-500 to-purple-600",
+            permissionKey: "petitions",
         },
         {
             name: "Successful Petitions",
             href: "/dashboard/successfulpetitions",
             icon: "fas fa-trophy",
             color: "from-yellow-500 to-yellow-600",
+            permissionKey: "successfulpetitions",
         },
         {
             name: "Ads Management",
             href: "/dashboard/ads",
             icon: "fas fa-ad",
             color: "from-pink-500 to-pink-600",
+            permissionKey: "ads",
         },
         {
             name: "Download Requests",
             href: "/dashboard/download-requests",
             icon: "fas fa-download",
             color: "from-teal-500 to-teal-600",
+            permissionKey: "download-requests",
         },
         {
             name: "Hide Requests",
             href: "/dashboard/hide-requests",
             icon: "fas fa-eye-slash",
             color: "from-orange-500 to-amber-600",
+            permissionKey: "hide-requests",
         },
         {
             name: "Blog Management",
             href: "/dashboard/blogs",
             icon: "fas fa-blog",
             color: "from-cyan-500 to-cyan-600",
+            permissionKey: "blogs",
         },
         {
             name: "Wallet Management",
             href: "/dashboard/wallets",
             icon: "fas fa-wallet",
             color: "from-emerald-500 to-emerald-600",
+            permissionKey: "wallets",
         },
         {
             name: "Wallet Requests",
             href: "/dashboard/wallet-requests",
             icon: "fas fa-money-check-alt",
             color: "from-rose-500 to-rose-600",
+            permissionKey: "wallet-requests",
         },
         {
             name: "User Management",
             href: "/dashboard/users",
             icon: "fas fa-users",
             color: "from-indigo-500 to-indigo-600",
+            permissionKey: "users",
         },
         {
             name: "Category Management",
             href: "/dashboard/categories",
             icon: "fas fa-tags",
             color: "from-fuchsia-500 to-fuchsia-600",
+            permissionKey: "categories",
         },
     ];
+
+    // Super admin only nav item
+    const subAdminNavItem = {
+        name: "Sub-Admin Management",
+        href: "/dashboard/sub-admins",
+        icon: "fas fa-user-shield",
+        color: "from-violet-500 to-violet-600",
+    };
+
+    // Filter nav items based on role
+    const getFilteredNavItems = () => {
+        if (!admin) return [];
+
+        if (admin.role === "superadmin") {
+            // Super admin sees everything + sub-admin management
+            return [...allNavItems, subAdminNavItem];
+        }
+
+        // Sub-admin sees only permitted modules
+        const permissions = admin.permissions || [];
+        // Always show dashboard for sub-admins
+        return allNavItems.filter(
+            (item) => item.permissionKey === "dashboard" || permissions.includes(item.permissionKey)
+        );
+    };
+
+    const navItems = getFilteredNavItems();
 
     const isActive = (href) => {
         if (href === "/dashboard") {
@@ -137,6 +177,29 @@ export default function DashboardLayout({ children }) {
         }
         return pathname.startsWith(href);
     };
+
+    // Check if current page is allowed for sub-admin
+    useEffect(() => {
+        if (!admin || loading) return;
+
+        if (admin.role === "subadmin") {
+            const permissions = admin.permissions || [];
+            // Check if current path is allowed
+            const currentNavItem = allNavItems.find((item) => {
+                if (item.href === "/dashboard") return pathname === "/dashboard";
+                return pathname.startsWith(item.href);
+            });
+
+            if (currentNavItem && currentNavItem.permissionKey !== "dashboard" && !permissions.includes(currentNavItem.permissionKey)) {
+                router.push("/dashboard");
+            }
+
+            // Block sub-admin from accessing sub-admins page
+            if (pathname.startsWith("/dashboard/sub-admins")) {
+                router.push("/dashboard");
+            }
+        }
+    }, [admin, pathname, loading, router]);
 
     if (loading) {
         return (
@@ -253,11 +316,27 @@ export default function DashboardLayout({ children }) {
                     <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
                             <p className="text-sm font-semibold text-gray-800">
-                                {admin?.email || "Admin"}
+                                {admin?.name || admin?.email || "Admin"}
                             </p>
-                            <p className="text-xs text-gray-500">Administrator</p>
+                            <div className="flex items-center justify-end gap-1.5">
+                                {admin?.role === "superadmin" ? (
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                                        <i className="fas fa-crown text-[9px]"></i>
+                                        Super Admin
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                                        <i className="fas fa-user-shield text-[9px]"></i>
+                                        Sub-Admin
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                            admin?.role === "superadmin"
+                                ? "bg-gradient-to-br from-blue-500 to-purple-600"
+                                : "bg-gradient-to-br from-purple-500 to-pink-600"
+                        }`}>
                             <i className="fas fa-user text-white"></i>
                         </div>
                     </div>
