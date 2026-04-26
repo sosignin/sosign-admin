@@ -142,6 +142,20 @@ export default function DashboardLayout({ children }) {
             color: "from-fuchsia-500 to-fuchsia-600",
             permissionKey: "categories",
         },
+        {
+            name: "Crowdfunding Approval",
+            href: "/dashboard/crowdfunding",
+            icon: "fas fa-hand-holding-heart",
+            color: "from-rose-500 to-red-600",
+            permissionKey: "crowdfunding",
+        },
+        {
+            name: "Withdrawal Requests",
+            href: "/dashboard/withdrawals",
+            icon: "fas fa-money-bill-wave",
+            color: "from-amber-500 to-orange-600",
+            permissionKey: "withdrawals",
+        },
     ];
 
     // Super admin only nav item

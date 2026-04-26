@@ -334,6 +334,46 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Total Crowdfunding Raised */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded-full -translate-y-10 translate-x-10"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Crowdfunding Raised
+                </p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  ₹{formatNumber(stats?.crowdfunding?.totalRaised || 0)}
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                <i className="fas fa-hand-holding-heart text-rose-600 text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Campaigns */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded-full -translate-y-10 translate-x-10"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Active Campaigns
+                </p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  {formatNumber(stats?.crowdfunding?.active || 0)}
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                <i className="fas fa-bullhorn text-amber-600 text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Detailed Breakdown */}

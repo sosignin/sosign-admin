@@ -57,6 +57,33 @@ export default function UserManagement() {
         setSortConfig({ key, direction });
     };
 
+    const handleToggleSuspension = async (userId, currentStatus) => {
+        if (!confirm(`Are you sure you want to ${currentStatus ? "unsuspend" : "suspend"} this user?`)) return;
+
+        try {
+            const response = await fetch(`${apiUrl}/api/admin/customers/${userId}/suspend`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ isSuspended: !currentStatus }),
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Update local state
+                setUsers(users.map(u => u._id === userId ? { ...u, isSuspended: !currentStatus } : u));
+                alert(data.message);
+            } else {
+                alert(data.message || "Failed to update user status.");
+            }
+        } catch (err) {
+            console.error("Error toggling suspension:", err);
+            alert("Something went wrong. Please try again.");
+        }
+    };
+
     const sortedUsers = useMemo(() => {
         let items = [...users];
         if (searchTerm) {
@@ -191,6 +218,7 @@ export default function UserManagement() {
                                     </div>
                                 </th>
                                 <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Status</th>
+                                <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -218,15 +246,33 @@ export default function UserManagement() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                                                Active
-                                            </span>
+                                            {user.isSuspended ? (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                                    Suspended
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                                    Active
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => handleToggleSuspension(user._id, user.isSuspended)}
+                                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                    user.isSuspended
+                                                        ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200"
+                                                        : "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                                                }`}
+                                            >
+                                                {user.isSuspended ? "Unsuspend" : "Suspend"}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="4" className="px-6 py-20 text-center">
+                                    <td colSpan="5" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
                                                 <i className="fas fa-users text-3xl text-gray-300"></i>
