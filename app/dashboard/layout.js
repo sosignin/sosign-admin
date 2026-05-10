@@ -73,6 +73,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "comment-approval",
         },
         {
+            name: "Rejected Petitions",
+            href: "/dashboard/rejected-petitions",
+            icon: "fas fa-times-circle",
+            color: "from-red-500 to-red-600",
+            permissionKey: "petitions",
+        },
+        {
             name: "All Petitions",
             href: "/dashboard/petitions",
             icon: "fas fa-file-alt",
