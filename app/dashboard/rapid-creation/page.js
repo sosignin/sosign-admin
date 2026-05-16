@@ -6,6 +6,7 @@ export default function RapidCreation() {
     const [activeTab, setActiveTab] = useState("user");
     const [users, setUsers] = useState([]);
     const [petitions, setPetitions] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
@@ -69,8 +70,17 @@ export default function RapidCreation() {
             if (petitionData && Array.isArray(petitionData.petitions)) {
                 setPetitions(petitionData.petitions);
             }
+
+            // Fetch categories
+            const categoryRes = await fetch(`${apiUrl}/api/admin/categories`, {
+                credentials: "include",
+            });
+            const categoryData = await categoryRes.json();
+            if (categoryData.success && Array.isArray(categoryData.categories)) {
+                setCategories(categoryData.categories);
+            }
         } catch (err) {
-            console.error("Failed to load users or petitions", err);
+            console.error("Failed to load initial data", err);
         }
     };
 
@@ -462,11 +472,19 @@ export default function RapidCreation() {
                                         onChange={(e) => setPetitionForm({ ...petitionForm, category: e.target.value })}
                                     >
                                         <option value="General">General</option>
-                                        <option value="Human Rights">Human Rights</option>
-                                        <option value="Environment">Environment</option>
-                                        <option value="Health">Health</option>
-                                        <option value="Education">Education</option>
-                                        <option value="Justice">Justice</option>
+                                        {categories.length > 0 ? (
+                                            categories.map(cat => (
+                                                <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="Human Rights">Human Rights</option>
+                                                <option value="Environment">Environment</option>
+                                                <option value="Health">Health</option>
+                                                <option value="Education">Education</option>
+                                                <option value="Justice">Justice</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
 
