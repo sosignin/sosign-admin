@@ -143,6 +143,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "users",
         },
         {
+            name: "Verified Users",
+            href: "/dashboard/verified-users",
+            icon: "fas fa-user-check",
+            color: "from-teal-500 to-teal-600",
+            permissionKey: "users",
+        },
+        {
             name: "Category Management",
             href: "/dashboard/categories",
             icon: "fas fa-tags",
