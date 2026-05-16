@@ -150,6 +150,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "users",
         },
         {
+            name: "Rapid Creation",
+            href: "/dashboard/rapid-creation",
+            icon: "fas fa-bolt",
+            color: "from-amber-500 to-orange-600",
+            permissionKey: "petitions",
+        },
+        {
             name: "Category Management",
             href: "/dashboard/categories",
             icon: "fas fa-tags",
