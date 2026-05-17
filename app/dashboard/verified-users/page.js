@@ -7,7 +7,7 @@ export default function VerifiedUsers() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortConfig, setSortConfig] = useState({ key: "aadhaarKyc.verifiedAt", direction: "desc" });
+    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -50,7 +50,9 @@ export default function VerifiedUsers() {
             items = items.filter(user =>
                 user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.aadhaarKyc?.maskedAadhaar?.includes(searchTerm)
+                user.aadhaarKyc?.maskedAadhaar?.includes(searchTerm) ||
+                user.panKyc?.panNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.voterKyc?.voterId?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -118,7 +120,7 @@ export default function VerifiedUsers() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Verified Users</h1>
-                    <p className="text-gray-500 mt-1">Users who have completed Aadhaar KYC via DigiLocker</p>
+                    <p className="text-gray-500 mt-1">Users who have completed identity verification</p>
                 </div>
                 <div className="bg-teal-50 px-4 py-2 rounded-xl border border-teal-100 flex items-center gap-3">
                     <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-teal-200">
@@ -140,7 +142,7 @@ export default function VerifiedUsers() {
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by name, email or Aadhaar..."
+                            placeholder="Search by name, email, Aadhaar, PAN or Voter ID..."
                             className="block w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -158,11 +160,11 @@ export default function VerifiedUsers() {
                                         <i className={`fas fa-sort text-[10px] transition-opacity ${sortConfig.key === "name" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-sm font-bold text-gray-600">Aadhaar Info</th>
-                                <th onClick={() => handleSort("aadhaarKyc.verifiedAt")} className="px-6 py-4 text-sm font-bold text-gray-600 cursor-pointer hover:bg-gray-100/50 transition-colors group">
+                                <th className="px-6 py-4 text-sm font-bold text-gray-600">Verified Documents</th>
+                                <th onClick={() => handleSort("createdAt")} className="px-6 py-4 text-sm font-bold text-gray-600 cursor-pointer hover:bg-gray-100/50 transition-colors group">
                                     <div className="flex items-center gap-2">
                                         Verification Date
-                                        <i className={`fas fa-sort text-[10px] transition-opacity ${sortConfig.key === "aadhaarKyc.verifiedAt" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
+                                        <i className={`fas fa-sort text-[10px] transition-opacity ${sortConfig.key === "createdAt" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
                                     </div>
                                 </th>
                                 <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Status</th>
@@ -185,14 +187,32 @@ export default function VerifiedUsers() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Masked:</span>
-                                                    <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                                                        {user.aadhaarKyc?.maskedAadhaar || "XXXX-XXXX-XXXX"}
-                                                    </span>
-                                                </div>
-                                                {user.mobileNumber && (
+                                                {user.aadhaarKyc?.status === "verified" && (
                                                     <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Aadhaar:</span>
+                                                        <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+                                                            {user.aadhaarKyc?.maskedAadhaar || "XXXX-XXXX-XXXX"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {user.panKyc?.status === "verified" && (
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">PAN:</span>
+                                                        <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+                                                            {user.panKyc?.panNumber || "XXXXX0000X"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {user.voterKyc?.status === "verified" && (
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Voter ID:</span>
+                                                        <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+                                                            {user.voterKyc?.voterId || "XXXXXX"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {user.mobileNumber && (
+                                                    <div className="flex items-center gap-2 mt-1">
                                                         <i className="fas fa-phone text-[10px] text-gray-400"></i>
                                                         <span className="text-xs text-gray-600">{user.mobileNumber}</span>
                                                     </div>
@@ -202,7 +222,7 @@ export default function VerifiedUsers() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 text-gray-600">
                                                 <i className="fas fa-calendar-check text-xs text-teal-500"></i>
-                                                <span className="text-sm font-medium">{formatDate(user.aadhaarKyc?.verifiedAt || user.createdAt)}</span>
+                                                <span className="text-sm font-medium">{formatDate(user.createdAt)}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
@@ -230,7 +250,7 @@ export default function VerifiedUsers() {
                 </div>
 
                 <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 text-sm text-gray-500">
-                    <p>Displaying <span className="font-bold text-gray-900">{sortedUsers.length}</span> Aadhaar-verified users</p>
+                    <p>Displaying <span className="font-bold text-gray-900">{sortedUsers.length}</span> verified users</p>
                 </div>
             </div>
         </div>

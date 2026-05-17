@@ -94,6 +94,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "successfulpetitions",
         },
         {
+            name: "Progress Updates",
+            href: "/dashboard/progress-updates",
+            icon: "fas fa-bullhorn",
+            color: "from-blue-400 to-indigo-500",
+            permissionKey: "petitions",
+        },
+        {
             name: "Ads Management",
             href: "/dashboard/ads",
             icon: "fas fa-ad",
