@@ -43,6 +43,11 @@ export default function RapidCreation() {
         useSameMobile: "9999990000",
     });
 
+    // Reset KYC Form State
+    const [resetKycForm, setResetKycForm] = useState({
+        userId: "",
+    });
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     // Fetch initial data
@@ -278,6 +283,36 @@ export default function RapidCreation() {
         }
     };
 
+    const handleResetKyc = async (type) => {
+        if (!resetKycForm.userId) {
+            setMessage({ type: "error", text: "Please select a user first." });
+            return;
+        }
+        setLoading(true);
+        setMessage({ type: "", text: "" });
+
+        try {
+            const res = await fetch(`${apiUrl}/api/admin/reset-kyc`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: resetKycForm.userId, type }),
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setMessage({ type: "success", text: data.message });
+                fetchUsersAndPetitions(); // Refresh lists
+            } else {
+                setMessage({ type: "error", text: data.message || "Failed to reset user KYC" });
+            }
+        } catch (err) {
+            setMessage({ type: "error", text: "Connection error. Please try again." });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="p-6 max-w-[1200px] mx-auto space-y-8">
             {/* Header section */}
@@ -306,7 +341,7 @@ export default function RapidCreation() {
             )}
 
             {/* Navigation Tabs */}
-            <div className="flex gap-2 p-1.5 bg-gray-100 rounded-2xl max-w-xl">
+            <div className="flex gap-2 p-1.5 bg-gray-100 rounded-2xl max-w-2xl">
                 <button
                     onClick={() => { setActiveTab("user"); setMessage({ type: "", text: "" }); }}
                     className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === "user" ? "bg-white text-amber-600 shadow-md" : "text-gray-500 hover:text-gray-700"}`}
@@ -327,6 +362,13 @@ export default function RapidCreation() {
                 >
                     <i className="fas fa-signature"></i>
                     Bulk Sign
+                </button>
+                <button
+                    onClick={() => { setActiveTab("resetKyc"); setMessage({ type: "", text: "" }); }}
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === "resetKyc" ? "bg-white text-amber-600 shadow-md" : "text-gray-500 hover:text-gray-700"}`}
+                >
+                    <i className="fas fa-trash-alt"></i>
+                    Reset User KYC
                 </button>
             </div>
 
@@ -815,6 +857,122 @@ export default function RapidCreation() {
                             )}
                         </button>
                     </form>
+                )}
+
+                {activeTab === "resetKyc" && (
+                    <div className="space-y-6 max-w-2xl">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900">Reset User Verification / KYC (Testing Tool)</h2>
+                            <p className="text-gray-500 text-sm mt-1">Select a user and choose which verification to reset individually, or reset all at once.</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700">Target User</label>
+                            <select
+                                required
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none bg-white font-medium text-gray-800"
+                                value={resetKycForm.userId}
+                                onChange={(e) => setResetKycForm({ userId: e.target.value })}
+                            >
+                                <option value="">-- Select User --</option>
+                                {users.map(u => (
+                                    <option key={u._id} value={u._id} className="text-gray-800 font-medium">
+                                        {u.name} ({u.email})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
+                            <i className="fas fa-exclamation-triangle text-amber-600 text-lg mt-0.5 animate-pulse"></i>
+                            <div className="text-sm text-amber-900 space-y-1">
+                                <p className="font-bold">Important Notice:</p>
+                                <p className="font-medium text-amber-800">
+                                    Performing any reset operation will set the selected KYC status back to <strong>&ldquo;not_verified&rdquo;</strong> for the selected user account. All linked documents, address data, and dates for that verification type will be removed from their profile.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Individual Reset Buttons */}
+                        <div className="space-y-3">
+                            <p className="text-sm font-bold text-gray-600 uppercase tracking-wider">Reset Individual Verification</p>
+
+                            {/* Aadhaar Reset */}
+                            <button
+                                type="button"
+                                disabled={loading || !resetKycForm.userId}
+                                onClick={() => handleResetKyc("aadhaar")}
+                                className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-blue-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+                            >
+                                {loading ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-id-card"></i>
+                                        Reset Aadhaar Verification
+                                    </>
+                                )}
+                            </button>
+
+                            {/* PAN Reset */}
+                            <button
+                                type="button"
+                                disabled={loading || !resetKycForm.userId}
+                                onClick={() => handleResetKyc("pan")}
+                                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-2xl shadow-xl shadow-emerald-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+                            >
+                                {loading ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-credit-card"></i>
+                                        Reset PAN Verification
+                                    </>
+                                )}
+                            </button>
+
+                            {/* Voter ID Reset */}
+                            <button
+                                type="button"
+                                disabled={loading || !resetKycForm.userId}
+                                onClick={() => handleResetKyc("voter")}
+                                className="w-full py-4 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white font-black rounded-2xl shadow-xl shadow-purple-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+                            >
+                                {loading ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-address-card"></i>
+                                        Reset Voter ID Verification
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-4">
+                            <hr className="flex-1 border-gray-200" />
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">or</span>
+                            <hr className="flex-1 border-gray-200" />
+                        </div>
+
+                        {/* Reset All */}
+                        <button
+                            type="button"
+                            disabled={loading || !resetKycForm.userId}
+                            onClick={() => handleResetKyc(null)}
+                            className="w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-black rounded-2xl shadow-xl shadow-rose-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+                        >
+                            {loading ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                            ) : (
+                                <>
+                                    <i className="fas fa-trash-alt"></i>
+                                    Reset All Verifications
+                                </>
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
