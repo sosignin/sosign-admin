@@ -154,12 +154,30 @@ export default function ProgressUpdateDetailPage() {
               Petition Information
             </h2>
           </div>
+          
+          {/* Petition Image Banner */}
+          {(update.petition?.image || (update.petition?.images && update.petition.images.length > 0)) && (
+            <div className="relative h-64 bg-gray-100">
+              <img 
+                src={update.petition.image || update.petition.images[0]} 
+                alt={update.petition.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <h3 className="text-white text-2xl font-bold">{update.petition.title}</h3>
+              </div>
+            </div>
+          )}
+          
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Petition Title</p>
-                <p className="text-gray-900 font-semibold text-lg">{update.petition?.title || "Unknown Petition"}</p>
-              </div>
+              {!(update.petition?.image || (update.petition?.images && update.petition.images.length > 0)) && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Petition Title</p>
+                  <p className="text-gray-900 font-semibold text-lg">{update.petition?.title || "Unknown Petition"}</p>
+                </div>
+              )}
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Petition Status</p>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">

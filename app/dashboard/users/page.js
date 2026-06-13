@@ -10,6 +10,11 @@ export default function UserManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
 
+    // Mobile management state
+    const [mobileModal, setMobileModal] = useState(null); // userId or null
+    const [mobileInput, setMobileInput] = useState("");
+    const [mobileLoading, setMobileLoading] = useState(false);
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     useEffect(() => {
@@ -84,12 +89,88 @@ export default function UserManagement() {
         }
     };
 
+    const openMobileModal = (user) => {
+        setMobileModal(user._id);
+        setMobileInput(user.mobileNumber || "");
+    };
+
+    const closeMobileModal = () => {
+        setMobileModal(null);
+        setMobileInput("");
+    };
+
+    const handleUpdateMobile = async () => {
+        try {
+            setMobileLoading(true);
+            const response = await fetch(`${apiUrl}/api/admin/customers/${mobileModal}/mobile`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ mobileNumber: mobileInput }),
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                setUsers(users.map(u =>
+                    u._id === mobileModal
+                        ? { ...u, mobileNumber: data.user.mobileNumber || null }
+                        : u
+                ));
+                closeMobileModal();
+                alert(data.message);
+            } else {
+                alert(data.message || "Failed to update mobile number.");
+            }
+        } catch (err) {
+            console.error("Error updating mobile:", err);
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setMobileLoading(false);
+        }
+    };
+
+    const handleResetMobile = async () => {
+        if (!confirm("Are you sure you want to reset (remove) this user's mobile number?")) return;
+        try {
+            setMobileLoading(true);
+            const response = await fetch(`${apiUrl}/api/admin/customers/${mobileModal}/mobile`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ mobileNumber: "" }),
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                setUsers(users.map(u =>
+                    u._id === mobileModal
+                        ? { ...u, mobileNumber: null }
+                        : u
+                ));
+                closeMobileModal();
+                alert(data.message);
+            } else {
+                alert(data.message || "Failed to reset mobile number.");
+            }
+        } catch (err) {
+            console.error("Error resetting mobile:", err);
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setMobileLoading(false);
+        }
+    };
+
     const sortedUsers = useMemo(() => {
         let items = [...users];
         if (searchTerm) {
             items = items.filter(user =>
                 user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.mobileNumber?.includes(searchTerm)
             );
         }
 
@@ -187,7 +268,7 @@ export default function UserManagement() {
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by name or email..."
+                            placeholder="Search by name, email, or mobile..."
                             className="block w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -211,6 +292,12 @@ export default function UserManagement() {
                                         <i className={`fas fa-sort text-[10px] transition-opacity ${sortConfig.key === "email" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
                                     </div>
                                 </th>
+                                <th className="px-6 py-4 text-sm font-bold text-gray-600">
+                                    <div className="flex items-center gap-2">
+                                        <i className="fas fa-phone text-xs text-gray-400"></i>
+                                        Mobile
+                                    </div>
+                                </th>
                                 <th onClick={() => handleSort("createdAt")} className="px-6 py-4 text-sm font-bold text-gray-600 cursor-pointer hover:bg-gray-100/50 transition-colors group">
                                     <div className="flex items-center gap-2">
                                         Joined Date
@@ -218,7 +305,7 @@ export default function UserManagement() {
                                     </div>
                                 </th>
                                 <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Status</th>
-                                <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Action</th>
+                                <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -237,6 +324,24 @@ export default function UserManagement() {
                                             <div className="flex items-center gap-2 text-gray-600">
                                                 <i className="fas fa-envelope text-xs"></i>
                                                 <span className="text-sm">{user.email}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {user.mobileNumber ? (
+                                                    <span className="text-sm font-medium text-gray-700 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200">
+                                                        {user.mobileNumber}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">Not set</span>
+                                                )}
+                                                <button
+                                                    onClick={() => openMobileModal(user)}
+                                                    className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                    title="Edit mobile number"
+                                                >
+                                                    <i className="fas fa-pen text-[10px]"></i>
+                                                </button>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -272,7 +377,7 @@ export default function UserManagement() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-20 text-center">
+                                    <td colSpan="6" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
                                                 <i className="fas fa-users text-3xl text-gray-300"></i>
@@ -295,6 +400,87 @@ export default function UserManagement() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Number Edit Modal */}
+            {mobileModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                                <i className="fas fa-phone text-indigo-600"></i>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">Manage Mobile Number</h3>
+                                <p className="text-sm text-gray-500">
+                                    {users.find(u => u._id === mobileModal)?.name || "User"}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                    Mobile Number
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+91</span>
+                                    <input
+                                        type="tel"
+                                        value={mobileInput}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                            setMobileInput(val);
+                                        }}
+                                        placeholder="Enter 10-digit number"
+                                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
+                                        maxLength={10}
+                                    />
+                                </div>
+                                {mobileInput && mobileInput.length !== 10 && (
+                                    <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                                        <i className="fas fa-exclamation-triangle text-[10px]"></i>
+                                        Please enter a valid 10-digit mobile number
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleUpdateMobile}
+                                    disabled={mobileLoading || (mobileInput && mobileInput.length !== 10)}
+                                    className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                                >
+                                    {mobileLoading ? (
+                                        <i className="fas fa-spinner animate-spin"></i>
+                                    ) : (
+                                        <i className="fas fa-save text-xs"></i>
+                                    )}
+                                    {mobileInput ? "Update Mobile" : "Save"}
+                                </button>
+                                <button
+                                    onClick={handleResetMobile}
+                                    disabled={mobileLoading}
+                                    className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl border border-red-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                                    title="Remove mobile number"
+                                >
+                                    {mobileLoading ? (
+                                        <i className="fas fa-spinner animate-spin"></i>
+                                    ) : (
+                                        <i className="fas fa-eraser text-xs"></i>
+                                    )}
+                                    Reset
+                                </button>
+                            </div>
+                            <button
+                                onClick={closeMobileModal}
+                                className="w-full py-2 text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
