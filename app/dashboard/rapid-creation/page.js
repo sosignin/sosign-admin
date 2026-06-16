@@ -93,6 +93,13 @@ export default function RapidCreation() {
         fetchUsersAndPetitions();
     }, [apiUrl]);
 
+    // Random email domains for dummy users
+    const randomDomains = [
+        "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "protonmail.com",
+        "rediffmail.com", "zoho.com", "icloud.com", "mail.com", "yandex.com",
+        "aol.com", "fastmail.com", "tutanota.com", "inbox.com", "live.com"
+    ];
+
     // Handle Quick Generate Email for Dummy User
     const handleGenerateEmail = () => {
         if (!userForm.name) {
@@ -101,9 +108,10 @@ export default function RapidCreation() {
         }
         const cleanName = userForm.name.toLowerCase().replace(/[^a-z0-9]/g, "");
         const uniqueNumber = Math.floor(1000 + Math.random() * 9000);
+        const randomDomain = randomDomains[Math.floor(Math.random() * randomDomains.length)];
         setUserForm({
             ...userForm,
-            email: `${cleanName}_${uniqueNumber}@sosign.com`,
+            email: `${cleanName}_${uniqueNumber}@${randomDomain}`,
             mobileNumber: userForm.mobileNumber || "9999990000",
         });
     };
