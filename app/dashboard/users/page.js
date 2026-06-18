@@ -227,6 +227,37 @@ export default function UserManagement() {
         }
     };
 
+    const isDummyUser = (email) => {
+        if (!email) return false;
+        return email.startsWith("dummy_") || /_[0-9]{4,6}@/.test(email);
+    };
+
+    const handleLoginAs = async (user) => {
+        try {
+            const response = await fetch(`${apiUrl}/api/admin/customers/${user._id}/login-as`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success && data.token) {
+                let frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+                if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+                    frontendUrl = "http://localhost:3000";
+                }
+                window.open(`${frontendUrl}/login?token=${data.token}`, "_blank");
+            } else {
+                alert(data.message || "Failed to generate login token.");
+            }
+        } catch (err) {
+            console.error("Error logging in as user:", err);
+            alert("Something went wrong. Please try again.");
+        }
+    };
+
     // --- All Users sorting/filtering ---
     const sortedUsers = useMemo(() => {
         let items = [...users];
@@ -481,9 +512,17 @@ export default function UserManagement() {
                                                         <i className="fas fa-user text-indigo-600"></i>
                                                     </div>
                                                     <span className="font-bold text-gray-900">{user.name || "Unnamed User"}</span>
+                                                    {isDummyUser(user.email) && (
+                                                        <span 
+                                                            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 cursor-help ml-2"
+                                                            title="Dummy Account (Default Password: dummy_password_12345)"
+                                                        >
+                                                            Dummy
+                                                        </span>
+                                                    )}
                                                     <button
                                                         onClick={() => openNameModal(user)}
-                                                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all ml-1"
                                                         title="Edit user name"
                                                     >
                                                         <i className="fas fa-pen text-[10px]"></i>
@@ -532,16 +571,26 @@ export default function UserManagement() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() => handleToggleSuspension(user._id, user.isSuspended)}
-                                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                        user.isSuspended
-                                                            ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200"
-                                                            : "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-                                                    }`}
-                                                >
-                                                    {user.isSuspended ? "Unsuspend" : "Suspend"}
-                                                </button>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => handleToggleSuspension(user._id, user.isSuspended)}
+                                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                            user.isSuspended
+                                                                ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200"
+                                                                : "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                                                        }`}
+                                                    >
+                                                        {user.isSuspended ? "Unsuspend" : "Suspend"}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleLoginAs(user)}
+                                                        className="px-4 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                                                        title="Login as user in a new tab"
+                                                    >
+                                                        <i className="fas fa-sign-in-alt"></i>
+                                                        Login
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -582,6 +631,7 @@ export default function UserManagement() {
                                         </div>
                                     </th>
                                     <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Status</th>
+                                    <th className="px-6 py-4 text-sm font-bold text-gray-600 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -594,7 +644,17 @@ export default function UserManagement() {
                                                         <i className="fas fa-user text-teal-600"></i>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="font-bold text-gray-900">{user.name}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-gray-900">{user.name}</span>
+                                                            {isDummyUser(user.email) && (
+                                                                <span 
+                                                                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 cursor-help"
+                                                                    title="Dummy Account (Default Password: dummy_password_12345)"
+                                                                >
+                                                                    Dummy
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <span className="text-xs text-gray-500">{user.email}</span>
                                                     </div>
                                                 </div>
@@ -645,11 +705,21 @@ export default function UserManagement() {
                                                     Verified
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button
+                                                    onClick={() => handleLoginAs(user)}
+                                                    className="px-4 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 justify-center mx-auto"
+                                                    title="Login as user in a new tab"
+                                                >
+                                                    <i className="fas fa-sign-in-alt"></i>
+                                                    Login
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="4" className="px-6 py-20 text-center">
+                                        <td colSpan="5" className="px-6 py-20 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
                                                     <i className="fas fa-user-slash text-3xl text-gray-300"></i>
