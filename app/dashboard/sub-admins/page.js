@@ -17,6 +17,8 @@ const ALL_PERMISSIONS = [
     { key: "wallet-requests", label: "Wallet Requests", icon: "fas fa-money-check-alt", color: "rose" },
     { key: "users", label: "User Management", icon: "fas fa-users", color: "indigo" },
     { key: "categories", label: "Category Management", icon: "fas fa-tags", color: "fuchsia" },
+    { key: "crowdfunding", label: "Crowdfunding Approval", icon: "fas fa-hand-holding-usd", color: "lime" },
+    { key: "withdrawals", label: "Withdrawal Requests", icon: "fas fa-money-bill-wave", color: "orange" },
 ];
 
 export default function SubAdminManagement() {
