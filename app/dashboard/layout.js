@@ -149,6 +149,13 @@ export default function DashboardLayout({ children }) {
             color: "from-indigo-500 to-indigo-600",
             permissionKey: "users",
         },
+        {
+            name: "Plan Management",
+            href: "/dashboard/plans",
+            icon: "fas fa-user-tag",
+            color: "from-violet-500 to-indigo-600",
+            permissionKey: "users",
+        },
 
         {
             name: "Rapid Creation",
