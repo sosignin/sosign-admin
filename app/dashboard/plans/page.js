@@ -487,7 +487,7 @@ export default function PlanManagement() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {plans.length === 0 ? (
                                 <div className="col-span-full text-center py-12 text-gray-400 italic">
-                                    No pricing plans defined. Click 'Add New Plan Tier' to create one.
+                                    No pricing plans defined. Click &apos;Add New Plan Tier&apos; to create one.
                                 </div>
                             ) : (
                                 plans.map((plan) => (
