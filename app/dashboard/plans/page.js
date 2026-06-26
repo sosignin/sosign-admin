@@ -32,6 +32,7 @@ export default function PlanManagement() {
     const [formKey, setFormKey] = useState("");
     const [formName, setFormName] = useState("");
     const [formPrice, setFormPrice] = useState(0);
+    const [formMrpPrice, setFormMrpPrice] = useState(0);
     const [formPoints, setFormPoints] = useState(0);
     const [formBestFor, setFormBestFor] = useState("");
     const [formIsActive, setFormIsActive] = useState(true);
@@ -41,6 +42,10 @@ export default function PlanManagement() {
     const [formVoter, setFormVoter] = useState(0);
     const [formAadhaarPan, setFormAadhaarPan] = useState(0);
     const [formAadhaarVoter, setFormAadhaarVoter] = useState(0);
+    const [formIsCustom, setFormIsCustom] = useState(false);
+    const [formSmsDm, setFormSmsDm] = useState(1.25);
+    const [formEmailDm, setFormEmailDm] = useState(0.50);
+    const [formWhatsappDm, setFormWhatsappDm] = useState(1.50);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -152,6 +157,7 @@ export default function PlanManagement() {
         setFormKey("");
         setFormName("");
         setFormPrice(0);
+        setFormMrpPrice(0);
         setFormPoints(0);
         setFormBestFor("");
         setFormIsActive(true);
@@ -160,6 +166,10 @@ export default function PlanManagement() {
         setFormVoter(5);
         setFormAadhaarPan(10);
         setFormAadhaarVoter(10);
+        setFormIsCustom(false);
+        setFormSmsDm(1.25);
+        setFormEmailDm(0.50);
+        setFormWhatsappDm(1.50);
     };
 
     const handleOpenEditPlanModal = (plan) => {
@@ -169,6 +179,7 @@ export default function PlanManagement() {
         setFormKey(plan.key);
         setFormName(plan.name);
         setFormPrice(plan.price);
+        setFormMrpPrice(plan.mrpPrice ?? plan.price);
         setFormPoints(plan.points);
         setFormBestFor(plan.bestFor || "");
         setFormIsActive(plan.isActive ?? true);
@@ -177,6 +188,10 @@ export default function PlanManagement() {
         setFormVoter(plan.deductions?.voter ?? 0);
         setFormAadhaarPan(plan.deductions?.aadhaar_pan ?? 0);
         setFormAadhaarVoter(plan.deductions?.aadhaar_voter ?? 0);
+        setFormIsCustom(plan.isCustom ?? false);
+        setFormSmsDm(plan.deductions?.sms_dm ?? 1.25);
+        setFormEmailDm(plan.deductions?.email_dm ?? 0.50);
+        setFormWhatsappDm(plan.deductions?.whatsapp_dm ?? 1.50);
     };
 
     const handleSavePlanConfig = async (e) => {
@@ -186,15 +201,20 @@ export default function PlanManagement() {
         const planPayload = {
             name: formName,
             price: parseFloat(formPrice),
+            mrpPrice: parseFloat(formMrpPrice),
             points: parseFloat(formPoints),
             bestFor: formBestFor,
             isActive: formIsActive,
+            isCustom: formIsCustom,
             deductions: {
                 aadhaar: parseFloat(formAadhaar),
                 pan: parseFloat(formPan),
                 voter: parseFloat(formVoter),
                 aadhaar_pan: parseFloat(formAadhaarPan),
                 aadhaar_voter: parseFloat(formAadhaarVoter),
+                sms_dm: parseFloat(formSmsDm),
+                email_dm: parseFloat(formEmailDm),
+                whatsapp_dm: parseFloat(formWhatsappDm),
             }
         };
 
@@ -508,8 +528,11 @@ export default function PlanManagement() {
                                                     <span className="text-[10px] font-mono text-gray-400">Key: {plan.key}</span>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="text-2xl font-extrabold text-gray-900">₹{plan.price.toLocaleString()}</span>
-                                                    <p className="text-[10px] text-[#F43676] font-bold">{plan.points.toLocaleString()} Points</p>
+                                                    <span className="text-2xl font-extrabold text-gray-900">{plan.isCustom ? "Custom" : `₹${plan.price.toLocaleString()}`}</span>
+                                                    {!plan.isCustom && plan.mrpPrice > plan.price && (
+                                                        <p className="text-xs text-gray-400 line-through">₹{plan.mrpPrice.toLocaleString()}</p>
+                                                    )}
+                                                    <p className="text-[10px] text-[#F43676] font-bold">{plan.isCustom ? "Custom Credits" : `${plan.points.toLocaleString()} Points`}</p>
                                                 </div>
                                             </div>
 
@@ -530,6 +553,18 @@ export default function PlanManagement() {
                                                     <div className="bg-gray-50 p-2 rounded-xl flex justify-between">
                                                         <span className="text-gray-500">Voter ID</span>
                                                         <span className="font-bold text-gray-800">{plan.deductions?.voter ?? 0} pts</span>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-2 rounded-xl flex justify-between">
+                                                        <span className="text-gray-500">SMS to DM</span>
+                                                        <span className="font-bold text-gray-800">{plan.deductions?.sms_dm ?? 1.25} pts</span>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-2 rounded-xl flex justify-between">
+                                                        <span className="text-gray-500">Email to DM</span>
+                                                        <span className="font-bold text-gray-800">{plan.deductions?.email_dm ?? 0.50} pts</span>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-2 rounded-xl flex justify-between">
+                                                        <span className="text-gray-500">WhatsApp to DM</span>
+                                                        <span className="font-bold text-gray-800">{plan.deductions?.whatsapp_dm ?? 1.50} pts</span>
                                                     </div>
                                                     <div className="bg-gray-50 p-2 rounded-xl col-span-2 flex justify-between">
                                                         <span className="text-gray-500">Aadhaar + PAN (Combined)</span>
@@ -715,7 +750,20 @@ export default function PlanManagement() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                        Package Price (₹)
+                                        MRP Price (Original ₹)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formMrpPrice}
+                                        onChange={(e) => setFormMrpPrice(e.target.value)}
+                                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-[#F43676] focus:outline-none text-sm transition-all font-medium"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                        Discounted Price (₹)
                                     </label>
                                     <input
                                         type="number"
@@ -802,6 +850,48 @@ export default function PlanManagement() {
                                             required
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                                            SMS to Decision Maker
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={formSmsDm}
+                                            onChange={(e) => setFormSmsDm(e.target.value)}
+                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-[#F43676] focus:outline-none text-sm transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                                            Email to Decision Maker
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={formEmailDm}
+                                            onChange={(e) => setFormEmailDm(e.target.value)}
+                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-[#F43676] focus:outline-none text-sm transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                                            WhatsApp to Decision Maker
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={formWhatsappDm}
+                                            onChange={(e) => setFormWhatsappDm(e.target.value)}
+                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-[#F43676] focus:outline-none text-sm transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
                                     <div className="col-span-2 grid grid-cols-2 gap-4 bg-pink-50/20 p-3 rounded-2xl border border-pink-100/50">
                                         <div className="col-span-2 text-[10px] text-pink-600 font-bold uppercase tracking-wider">
                                             Combined verification rates
@@ -838,18 +928,32 @@ export default function PlanManagement() {
                                 </div>
                             </div>
 
-                            {/* Active checkbox */}
-                            <div className="flex items-center gap-2 pt-2">
-                                <input
-                                    type="checkbox"
-                                    id="planActive"
-                                    checked={formIsActive}
-                                    onChange={(e) => setFormIsActive(e.target.checked)}
-                                    className="w-4 h-4 rounded text-[#F43676] focus:ring-[#F43676] border-gray-300"
-                                />
-                                <label htmlFor="planActive" className="text-xs text-gray-600 font-bold">
-                                    Display Plan as Active for Users
-                                </label>
+                            {/* Checkboxes */}
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="planActive"
+                                        checked={formIsActive}
+                                        onChange={(e) => setFormIsActive(e.target.checked)}
+                                        className="w-4 h-4 rounded text-[#F43676] focus:ring-[#F43676] border-gray-300"
+                                    />
+                                    <label htmlFor="planActive" className="text-xs text-gray-600 font-bold">
+                                        Display Plan as Active
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="planCustom"
+                                        checked={formIsCustom}
+                                        onChange={(e) => setFormIsCustom(e.target.checked)}
+                                        className="w-4 h-4 rounded text-[#F43676] focus:ring-[#F43676] border-gray-300"
+                                    />
+                                    <label htmlFor="planCustom" className="text-xs text-gray-600 font-bold">
+                                        Is Custom Plan (Contact for Quote)
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="flex gap-3 mt-8">
