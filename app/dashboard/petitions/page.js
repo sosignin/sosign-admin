@@ -316,6 +316,12 @@ export default function PetitionsPage() {
                       <p className="text-sm text-gray-500 truncate">
                         {petition.petitionDetails.problem.substring(0, 100)}...
                       </p>
+                      {petition.requestedSigners?.length > 0 && (
+                        <p className="text-xs text-blue-600 font-semibold mt-1 truncate">
+                          <i className="fas fa-bullseye mr-1 text-[10px]"></i>
+                          Target Signers: {petition.requestedSigners.map(s => s.name).join(", ")}
+                        </p>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

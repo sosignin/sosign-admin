@@ -251,6 +251,31 @@ export default function PetitionApprovalPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Target Signers */}
+                      {petition.requestedSigners?.length > 0 && (
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                            <i className="fas fa-bullseye text-[10px]"></i>
+                            Target Signers
+                          </label>
+                          <div className="flex flex-wrap gap-3">
+                            {petition.requestedSigners.map((rs, i) => (
+                              <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-3">
+                                <div className="w-8 h-8 bg-white rounded-full border border-gray-200 flex items-center justify-center">
+                                  <i className="fas fa-star text-yellow-500 text-xs"></i>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-bold text-gray-900">{rs.name}</p>
+                                  <p className="text-[10px] text-gray-500">
+                                    {rs.designation || "Target Signer"}{rs.email ? ` (${rs.email})` : ""}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Right Column: Author Info & Requirements */}

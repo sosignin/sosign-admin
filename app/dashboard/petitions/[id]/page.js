@@ -394,6 +394,129 @@ export default function PetitionDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Target Signers */}
+          {petition.requestedSigners?.length > 0 && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -translate-y-12 translate-x-12"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl">
+                    <i className="fas fa-bullseye text-blue-600 text-lg"></i>
+                  </div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    Target Signers (Optional)
+                  </h2>
+                </div>
+                <div className="grid gap-4">
+                  {petition.requestedSignersStatus ? (
+                    petition.requestedSignersStatus.map((signer, index) => (
+                      <div
+                        key={index}
+                        className={`border rounded-xl p-4 transition-all duration-200 ${
+                          signer.hasSigned 
+                            ? "bg-green-50/50 border-green-200 hover:shadow-md" 
+                            : "bg-gradient-to-r from-gray-50 to-white hover:shadow-md"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <i className="fas fa-user text-blue-500 mr-1"></i>
+                                Name
+                              </label>
+                              <p className="text-gray-900 font-medium">{signer.name}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <i className="fas fa-envelope text-purple-500 mr-1"></i>
+                                Email
+                              </label>
+                              <p className="text-gray-900 font-medium">{signer.email || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <i className="fas fa-briefcase text-orange-500 mr-1"></i>
+                                Designation
+                              </label>
+                              <p className="text-gray-900 font-medium">{signer.designation || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <i className="fas fa-info-circle text-gray-500 mr-1"></i>
+                                Status
+                              </label>
+                              {signer.hasSigned ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">
+                                  <i className="fas fa-check-circle"></i> Signed
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                  <i className="fas fa-clock"></i> Pending Signature
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {signer.hasSigned && signer.signedBy && (
+                          <div className="mt-4 pt-3 border-t border-green-200 flex items-center gap-3">
+                            {signer.signedBy.profilePicture ? (
+                              <img 
+                                src={signer.signedBy.profilePicture} 
+                                alt={signer.signedBy.name} 
+                                className="w-10 h-10 rounded-full object-cover border border-green-200" 
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                                {signer.signedBy.name.charAt(0)}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-xs font-bold text-gray-900">Signed as verified user:</p>
+                              <p className="text-xs text-gray-500">@{signer.signedBy.name}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    petition.requestedSigners.map((signer, index) => (
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-xl p-4 bg-gradient-to-r from-gray-50 to-white hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                              <i className="fas fa-user text-blue-500 mr-1"></i>
+                              Name
+                            </label>
+                            <p className="text-gray-900 font-medium">{signer.name}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                              <i className="fas fa-envelope text-purple-500 mr-1"></i>
+                              Email
+                            </label>
+                            <p className="text-gray-900 font-medium">{signer.email || "N/A"}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                              <i className="fas fa-briefcase text-orange-500 mr-1"></i>
+                              Designation
+                            </label>
+                            <p className="text-gray-950 font-medium">{signer.designation || "N/A"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column - Sidebar */}
