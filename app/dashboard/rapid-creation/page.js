@@ -111,7 +111,7 @@ export default function RapidCreation() {
         const randomDomain = randomDomains[Math.floor(Math.random() * randomDomains.length)];
         setUserForm({
             ...userForm,
-            email: `${cleanName}_${uniqueNumber}@${randomDomain}`,
+            email: `${cleanName}${uniqueNumber}@${randomDomain}`,
             mobileNumber: userForm.mobileNumber || "9999990000",
         });
     };
