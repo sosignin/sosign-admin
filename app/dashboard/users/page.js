@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { getAuthHeaders } from "@/utils/api";
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
@@ -28,20 +29,24 @@ export default function UserManagement() {
         const fetchData = async () => {
             try {
                 setLoading(true);
+                const headers = getAuthHeaders();
                 // Fetch all users
                 const usersRes = await fetch(`${apiUrl}/api/admin/customers`, {
+                    headers,
                     credentials: "include",
                 });
                 const usersData = await usersRes.json();
 
                 // Fetch stats for total user count
                 const statsRes = await fetch(`${apiUrl}/api/admin/stats`, {
+                    headers,
                     credentials: "include",
                 });
                 const statsData = await statsRes.json();
 
                 // Fetch verified users
                 const verifiedRes = await fetch(`${apiUrl}/api/admin/verified-users`, {
+                    headers,
                     credentials: "include",
                 });
                 const verifiedData = await verifiedRes.json();

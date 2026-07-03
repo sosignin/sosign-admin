@@ -36,11 +36,15 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
+        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+        const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
         const response = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
           }/api/admin/stats`,
           {
+            headers,
             credentials: "include", // Include admin cookies
           }
         );

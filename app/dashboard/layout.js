@@ -17,7 +17,11 @@ export default function DashboardLayout({ children }) {
         const checkAuth = async () => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+                const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
                 const res = await fetch(`${apiUrl}/api/admin/me`, {
+                    headers,
                     credentials: "include",
                 });
 
@@ -41,10 +45,17 @@ export default function DashboardLayout({ children }) {
     const handleLogout = async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+            const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
             await fetch(`${apiUrl}/api/admin/logout`, {
                 method: "POST",
+                headers,
                 credentials: "include",
             });
+            if (typeof window !== "undefined") {
+                localStorage.removeItem("adminToken");
+            }
             router.push("/login");
         } catch (err) {
             console.error("Logout failed:", err);
