@@ -89,6 +89,7 @@ export default function SeoSuite() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkGscStatus();
   }, [apiUrl]);
@@ -587,7 +588,7 @@ export default function SeoSuite() {
                     </button>
                   </div>
                   <p className="text-xs text-blue-800">
-                    Your API Key will be stored locally in your browser's secure cache so you won't need to re-enter it next time.
+                    Your API Key will be stored locally in your browser&apos;s secure cache so you won&apos;t need to re-enter it next time.
                   </p>
                 </div>
 
@@ -647,9 +648,9 @@ export default function SeoSuite() {
                           onChange={(e) => setDepthLimit(parseInt(e.target.value))}
                           disabled={!selectedEngines.includes("paa")}
                         >
-                          <option value="1">1 (Fast - ~5 q's)</option>
-                          <option value="2">2 (Medium - ~25 q's)</option>
-                          <option value="3">3 (Deep - ~125 q's)</option>
+                          <option value="1">1 (Fast - ~5 q&apos;s)</option>
+                          <option value="2">2 (Medium - ~25 q&apos;s)</option>
+                          <option value="3">3 (Deep - ~125 q&apos;s)</option>
                         </select>
                       </div>
                     </div>
@@ -778,7 +779,7 @@ export default function SeoSuite() {
                 Research Results
               </span>
               <h2 className="text-2xl font-extrabold text-gray-900">
-                SEO Keywords for: <span className="text-indigo-600">"{query}"</span>
+                SEO Keywords for: <span className="text-indigo-600">&quot;{query}&quot;</span>
               </h2>
             </div>
             
@@ -887,7 +888,7 @@ export default function SeoSuite() {
 
                 {(!results.people_also_ask || results.people_also_ask.length === 0) ? (
                   <p className="text-xs text-gray-500 font-medium italic py-4">
-                    No questions returned. Some keywords don't trigger query trees.
+                    No questions returned. Some keywords don&apos;t trigger query trees.
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-[450px] overflow-y-auto pr-1">
@@ -1005,10 +1006,10 @@ export default function SeoSuite() {
                     Go to <strong>IAM & Admin &gt; Service Accounts</strong>, create a new Service Account, and click <strong>Keys &gt; Add Key &gt; Create New Key (JSON)</strong>. This will download a JSON credentials file.
                   </li>
                   <li>
-                    Rename that file to <strong>`credentials.json`</strong> and save it inside your backend project's root folder (`/backend/credentials.json`).
+                    Rename that file to <strong>`credentials.json`</strong> and save it inside your backend project&apos;s root folder (`/backend/credentials.json`).
                   </li>
                   <li>
-                    Copy your service account's email (e.g. `your-service-account@...gserviceaccount.com`).
+                    Copy your service account&apos;s email (e.g. `your-service-account@...gserviceaccount.com`).
                   </li>
                   <li>
                     Open your <a href="https://search.google.com/search-console" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Google Search Console dashboard</a>, navigate to <strong>Settings &gt; Users and Permissions</strong>, click **Add User**, paste the email, and grant **Owner** or **Full** permission for your site (`https://sosign.in`).
