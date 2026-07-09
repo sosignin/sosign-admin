@@ -177,6 +177,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "petitions",
         },
         {
+            name: "SEO Research",
+            href: "/dashboard/seo",
+            icon: "fas fa-search-plus",
+            color: "from-blue-500 to-cyan-600",
+            permissionKey: "dashboard",
+        },
+        {
             name: "Category Management",
             href: "/dashboard/categories",
             icon: "fas fa-tags",
