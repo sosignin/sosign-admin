@@ -141,6 +141,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "blogs",
         },
         {
+            name: "FAQ Management",
+            href: "/dashboard/faq",
+            icon: "fas fa-question-circle",
+            color: "from-blue-500 to-indigo-600",
+            permissionKey: "blogs",
+        },
+        {
             name: "Wallet Management",
             href: "/dashboard/wallets",
             icon: "fas fa-wallet",
