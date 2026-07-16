@@ -49,6 +49,7 @@ export default function FAQManagementPage() {
 
   useEffect(() => {
     fetchFaqs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiUrl]);
 
   const handleOpenCreateModal = () => {
@@ -261,7 +262,7 @@ export default function FAQManagementPage() {
               ) : (
                 <tr>
                   <td colSpan="4" className="px-6 py-12 text-center text-gray-400 font-medium">
-                    No FAQs found in this filter/search query. Click "Add New FAQ" to create one.
+                    No FAQs found in this filter/search query. Click &quot;Add New FAQ&quot; to create one.
                   </td>
                 </tr>
               )}

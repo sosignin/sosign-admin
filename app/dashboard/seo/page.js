@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export default function SeoSuite() {
   const [activeTab, setActiveTab] = useState("keywords");
@@ -66,7 +66,7 @@ export default function SeoSuite() {
   }, []);
 
   // Check GSC Configuration on mount & tab changes
-  const checkGscStatus = async () => {
+  const checkGscStatus = useCallback(async () => {
     setGscLoading(true);
     try {
       const res = await fetch(`${apiUrl}/api/admin/gsc/status`, {
@@ -87,15 +87,14 @@ export default function SeoSuite() {
     } finally {
       setGscLoading(false);
     }
-  };
+  }, [apiUrl, gscPropertyUrl]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkGscStatus();
-  }, [apiUrl]);
+  }, [checkGscStatus]);
 
   // Fetch performance report from Search Console
-  const fetchGscPerformance = async (propertyUrl) => {
+  const fetchGscPerformance = useCallback(async (propertyUrl) => {
     setGscPerfLoading(true);
     setGscPerfError(null);
     try {
@@ -119,7 +118,7 @@ export default function SeoSuite() {
     } finally {
       setGscPerfLoading(false);
     }
-  };
+  }, [apiUrl]);
 
   // Inspect specific page URL status
   const handleInspectUrl = async (e) => {
