@@ -10,6 +10,69 @@ export default function CategoryManagement() {
     const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
     const [deleteLoading, setDeleteLoading] = useState(null);
 
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [newCategoryIcon, setNewCategoryIcon] = useState("FaTag");
+    const [createError, setCreateError] = useState(null);
+    const [createLoading, setCreateLoading] = useState(false);
+
+    const iconChoices = [
+        { name: "Tag (Default)", value: "FaTag" },
+        { name: "Paw (Animals)", value: "FaPaw" },
+        { name: "Gamepad (Game)", value: "FaGamepad" },
+        { name: "Couch (Interior)", value: "FaCouch" },
+        { name: "Spa (Lifestyle)", value: "FaSpa" },
+        { name: "Person Running (Sports)", value: "FaPersonRunning" },
+        { name: "Laptop Code (Technology)", value: "FaLaptopCode" },
+        { name: "Plane (Travel)", value: "FaPlane" },
+        { name: "Leaf (Environment)", value: "FaLeaf" },
+        { name: "Graduation Cap (Education)", value: "FaGraduationCap" },
+        { name: "Heart Pulse (Health)", value: "FaHeartPulse" },
+        { name: "Landmark Dome (Politics)", value: "FaLandmarkDome" },
+        { name: "Hand Fist (Human Rights)", value: "FaHandFist" }
+    ];
+
+    const handleCreateCategory = async (e) => {
+        e.preventDefault();
+        if (!newCategoryName || newCategoryName.trim().length === 0) {
+            setCreateError("Category name is required");
+            return;
+        }
+        if (newCategoryName.trim().length > 15) {
+            setCreateError("Category name can be up to 15 characters only");
+            return;
+        }
+        try {
+            setCreateLoading(true);
+            setCreateError(null);
+            const res = await fetch(`${apiUrl}/api/admin/categories`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: newCategoryName.trim(),
+                    icon: newCategoryIcon
+                }),
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCategories([data.category, ...categories]);
+                setNewCategoryName("");
+                setNewCategoryIcon("FaTag");
+                setShowCreateModal(false);
+            } else {
+                setCreateError(data.message || "Failed to create category");
+            }
+        } catch (err) {
+            console.error("Error creating category:", err);
+            setCreateError("An error occurred while creating category.");
+        } finally {
+            setCreateLoading(false);
+        }
+    };
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     const fetchCategories = async () => {
@@ -128,7 +191,24 @@ export default function CategoryManagement() {
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Category Management</h1>
                     <p className="text-gray-500 mt-1">View and manage petition categories</p>
                 </div>
-                {/* Header Actions removed as requested for consistency with User Management */}
+                <div className="flex gap-3">
+                    <a
+                        href="http://localhost:3000/categories"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-2"
+                    >
+                        <i className="fas fa-external-link-alt text-xs"></i>
+                        View Public Page
+                    </a>
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-fuchsia-800 text-white font-semibold rounded-xl hover:from-fuchsia-700 hover:to-fuchsia-900 shadow-md transition-all text-sm flex items-center gap-2"
+                    >
+                        <i className="fas fa-plus text-xs"></i>
+                        Create Category
+                    </button>
+                </div>
             </div>
 
             {/* Stats Overview */}
@@ -270,6 +350,92 @@ export default function CategoryManagement() {
                     <p>Total shown: <span className="font-bold text-gray-900">{filteredCategories.length}</span> categories</p>
                 </div>
             </div>
+
+            {/* Create Category Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 className="text-xl font-bold text-gray-900">Create New Category</h3>
+                            <button
+                                onClick={() => {
+                                    setShowCreateModal(false);
+                                    setCreateError(null);
+                                }}
+                                className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        {createError && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-medium">
+                                {createError}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleCreateCategory} className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-gray-700">Category Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    maxLength={15}
+                                    placeholder="e.g. Health"
+                                    value={newCategoryName}
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all text-sm outline-none font-medium text-gray-900"
+                                />
+                                <span className="text-[11px] text-gray-400 font-semibold self-end">
+                                    {newCategoryName.length}/15 characters
+                                </span>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-gray-700">Category Icon</label>
+                                <select
+                                    value={newCategoryIcon}
+                                    onChange={(e) => setNewCategoryIcon(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all text-sm outline-none font-medium text-gray-900"
+                                >
+                                    {iconChoices.map((choice) => (
+                                        <option key={choice.value} value={choice.value}>
+                                            {choice.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCreateModal(false);
+                                        setCreateError(null);
+                                    }}
+                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors text-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={createLoading}
+                                    className="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-fuchsia-800 text-white font-semibold rounded-xl hover:from-fuchsia-700 hover:to-fuchsia-900 shadow-md transition-all text-sm flex items-center gap-2"
+                                >
+                                    {createLoading ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        "Create"
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
