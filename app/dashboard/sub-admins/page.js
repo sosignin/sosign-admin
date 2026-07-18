@@ -19,6 +19,12 @@ const ALL_PERMISSIONS = [
     { key: "categories", label: "Category Management", icon: "fas fa-tags", color: "fuchsia" },
     { key: "crowdfunding", label: "Crowdfunding Approval", icon: "fas fa-hand-holding-usd", color: "lime" },
     { key: "withdrawals", label: "Withdrawal Requests", icon: "fas fa-money-bill-wave", color: "orange" },
+    { key: "rejected-petitions", label: "Rejected Petitions", icon: "fas fa-times-circle", color: "red" },
+    { key: "progress-updates", label: "Progress Updates", icon: "fas fa-tasks", color: "sky" },
+    { key: "faqs", label: "FAQs Management", icon: "fas fa-question-circle", color: "violet" },
+    { key: "plans", label: "Plan Management", icon: "fas fa-crown", color: "amber" },
+    { key: "rapid-creation", label: "Rapid Creation", icon: "fas fa-bolt", color: "yellow" },
+    { key: "seo-research", label: "SEO Research", icon: "fas fa-search", color: "teal" },
 ];
 
 export default function SubAdminManagement() {

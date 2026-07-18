@@ -89,7 +89,7 @@ export default function DashboardLayout({ children }) {
             href: "/dashboard/rejected-petitions",
             icon: "fas fa-times-circle",
             color: "from-red-500 to-red-600",
-            permissionKey: "petitions",
+            permissionKey: "rejected-petitions",
         },
         {
             name: "All Petitions",
@@ -110,7 +110,7 @@ export default function DashboardLayout({ children }) {
             href: "/dashboard/progress-updates",
             icon: "fas fa-bullhorn",
             color: "from-blue-400 to-indigo-500",
-            permissionKey: "petitions",
+            permissionKey: "progress-updates",
         },
         {
             name: "Ads Management",
@@ -145,7 +145,7 @@ export default function DashboardLayout({ children }) {
             href: "/dashboard/faq",
             icon: "fas fa-question-circle",
             color: "from-blue-500 to-indigo-600",
-            permissionKey: "blogs",
+            permissionKey: "faqs",
         },
         {
             name: "Wallet Management",
@@ -173,7 +173,7 @@ export default function DashboardLayout({ children }) {
             href: "/dashboard/plans",
             icon: "fas fa-user-tag",
             color: "from-violet-500 to-indigo-600",
-            permissionKey: "users",
+            permissionKey: "plans",
         },
 
         {
@@ -181,14 +181,14 @@ export default function DashboardLayout({ children }) {
             href: "/dashboard/rapid-creation",
             icon: "fas fa-bolt",
             color: "from-amber-500 to-orange-600",
-            permissionKey: "petitions",
+            permissionKey: "rapid-creation",
         },
         {
             name: "SEO Research",
             href: "/dashboard/seo",
             icon: "fas fa-search-plus",
             color: "from-blue-500 to-cyan-600",
-            permissionKey: "dashboard",
+            permissionKey: "seo-research",
         },
         {
             name: "Category Management",
