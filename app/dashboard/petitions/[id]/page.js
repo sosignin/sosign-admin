@@ -13,6 +13,13 @@ export default function PetitionDetailPage() {
   const [error, setError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Signatures pagination state
+  const [allSignatures, setAllSignatures] = useState([]);
+  const [signaturesPage, setSignaturesPage] = useState(1);
+  const [signaturesTotalPages, setSignaturesTotalPages] = useState(1);
+  const [signaturesTotalCount, setSignaturesTotalCount] = useState(0);
+  const [signaturesLoading, setSignaturesLoading] = useState(false);
+
   // Fetch petition details
   const fetchPetition = useCallback(async () => {
     try {
@@ -38,6 +45,38 @@ export default function PetitionDetailPage() {
       setLoading(false);
     }
   }, [params.id]);
+
+  // Fetch all signatures (paginated)
+  const fetchSignatures = useCallback(
+    async (page = 1) => {
+      try {
+        setSignaturesLoading(true);
+        const response = await fetch(
+          `${
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+          }/api/admin/petitions/${params.id}/signatures?page=${page}&limit=20`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch signatures");
+        }
+
+        const data = await response.json();
+        setAllSignatures(data.signatures);
+        setSignaturesPage(data.currentPage);
+        setSignaturesTotalPages(data.totalPages);
+        setSignaturesTotalCount(data.totalSignatures);
+      } catch (err) {
+        console.error("Error fetching signatures:", err);
+      } finally {
+        setSignaturesLoading(false);
+      }
+    },
+    [params.id]
+  );
 
   // Delete petition
   const handleDeletePetition = async () => {
@@ -85,8 +124,14 @@ export default function PetitionDetailPage() {
   useEffect(() => {
     if (params.id) {
       fetchPetition();
+      fetchSignatures(1);
     }
-  }, [params.id, fetchPetition]);
+  }, [params.id, fetchPetition, fetchSignatures]);
+
+  const handleSignaturesPageChange = (newPage) => {
+    if (newPage < 1 || newPage > signaturesTotalPages) return;
+    fetchSignatures(newPage);
+  };
 
   if (loading) {
     return (
@@ -643,7 +688,7 @@ export default function PetitionDetailPage() {
                 <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                   <i className="fas fa-list text-blue-500 text-2xl mb-2"></i>
                   <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                    {petition.signatures.length}
+                    {signaturesTotalCount}
                   </div>
                   <div className="text-sm text-blue-700 font-medium">
                     Recorded Signatures
@@ -702,22 +747,53 @@ export default function PetitionDetailPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Recent Signatures */}
-          {petition.signatures.length > 0 && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 rounded-full -translate-y-10 translate-x-10"></div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl">
-                    <i className="fas fa-history text-indigo-600 text-lg"></i>
-                  </div>
-                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                    Recent Signatures
-                  </h2>
+      {/* All Signatures - Full Width Section */}
+      {signaturesTotalCount > 0 && (
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 rounded-full -translate-y-12 translate-x-12"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl">
+                  <i className="fas fa-pen-nib text-indigo-600 text-lg"></i>
                 </div>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {petition.signatures.slice(0, 10).map((signature, index) => {
+                <div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    All Signatures
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Showing {(signaturesPage - 1) * 20 + 1}–
+                    {Math.min(signaturesPage * 20, signaturesTotalCount)} of{" "}
+                    {signaturesTotalCount} signatures
+                  </p>
+                </div>
+              </div>
+              {signaturesTotalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-500 mr-2 hidden sm:inline">
+                    Page {signaturesPage} of {signaturesTotalPages}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {signaturesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-10 w-10 border-3 border-indigo-200 border-t-indigo-600"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <i className="fas fa-pen-nib text-indigo-600 text-xs"></i>
+                  </div>
+                </div>
+                <span className="ml-3 text-gray-500 font-medium">Loading signatures...</span>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {allSignatures.map((signature, index) => {
                     const user = signature.user?.name
                       ? `${signature.user.name} (${
                           signature.user.email || signature.user._id
@@ -731,55 +807,120 @@ export default function PetitionDetailPage() {
                       : signature.referral?.owner || null;
                     return (
                       <div
-                        key={index}
+                        key={signature._id || index}
                         className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200"
                       >
                         <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex-shrink-0">
+                            {(signaturesPage - 1) * 20 + index + 1}
+                          </div>
                           <i className="fas fa-user text-blue-500"></i>
-                          <p className="text-gray-900 font-medium">
-                            Signer: {user}
+                          <p className="text-gray-900 font-medium text-sm truncate">
+                            {user}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <i className="fas fa-code text-purple-500"></i>
-                          <p className="text-gray-700">
-                            Code Used:{" "}
-                            <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm">
+                        <div className="flex items-center gap-2 mb-2 ml-8">
+                          <i className="fas fa-code text-purple-500 text-xs"></i>
+                          <p className="text-gray-700 text-sm">
+                            Code:{" "}
+                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-xs">
                               {signature.referral?.code || "(none)"}
                             </span>
                           </p>
                         </div>
                         {refOwner && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <i className="fas fa-user-tie text-green-500"></i>
-                            <p className="text-gray-700">
-                              Code Owner: {refOwner}
+                          <div className="flex items-center gap-2 mb-2 ml-8">
+                            <i className="fas fa-user-tie text-green-500 text-xs"></i>
+                            <p className="text-gray-700 text-sm truncate">
+                              Owner: {refOwner}
                             </p>
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
-                          <i className="fas fa-clock text-gray-500"></i>
-                          <p className="text-gray-500 text-sm">
+                        <div className="flex items-center gap-2 ml-8">
+                          <i className="fas fa-clock text-gray-400 text-xs"></i>
+                          <p className="text-gray-500 text-xs">
                             {formatDate(signature.signedAt)}
                           </p>
                         </div>
                       </div>
                     );
                   })}
-                  {petition.signatures.length > 10 && (
-                    <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                      <p className="text-sm text-gray-500 font-medium">
-                        <i className="fas fa-ellipsis-h mr-2"></i>
-                        ... and {petition.signatures.length - 10} more
-                      </p>
-                    </div>
-                  )}
                 </div>
-              </div>
-            </div>
-          )}
+
+                {/* Pagination Controls */}
+                {signaturesTotalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => handleSignaturesPageChange(1)}
+                      disabled={signaturesPage === 1}
+                      className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                      title="First page"
+                    >
+                      <i className="fas fa-angle-double-left"></i>
+                    </button>
+                    <button
+                      onClick={() => handleSignaturesPageChange(signaturesPage - 1)}
+                      disabled={signaturesPage === 1}
+                      className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                      title="Previous page"
+                    >
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+
+                    {/* Page numbers */}
+                    {(() => {
+                      const pages = [];
+                      let start = Math.max(1, signaturesPage - 2);
+                      let end = Math.min(signaturesTotalPages, signaturesPage + 2);
+
+                      if (signaturesPage <= 3) {
+                        end = Math.min(5, signaturesTotalPages);
+                      }
+                      if (signaturesPage >= signaturesTotalPages - 2) {
+                        start = Math.max(1, signaturesTotalPages - 4);
+                      }
+
+                      for (let i = start; i <= end; i++) {
+                        pages.push(
+                          <button
+                            key={i}
+                            onClick={() => handleSignaturesPageChange(i)}
+                            className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                              i === signaturesPage
+                                ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200"
+                                : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {i}
+                          </button>
+                        );
+                      }
+                      return pages;
+                    })()}
+
+                    <button
+                      onClick={() => handleSignaturesPageChange(signaturesPage + 1)}
+                      disabled={signaturesPage === signaturesTotalPages}
+                      className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                      title="Next page"
+                    >
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                    <button
+                      onClick={() => handleSignaturesPageChange(signaturesTotalPages)}
+                      disabled={signaturesPage === signaturesTotalPages}
+                      className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                      title="Last page"
+                    >
+                      <i className="fas fa-angle-double-right"></i>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Comments Section */}
       {petition && petition._id && (
