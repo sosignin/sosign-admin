@@ -141,6 +141,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "blogs",
         },
         {
+            name: "Newsletter Management",
+            href: "/dashboard/newsletters",
+            icon: "fas fa-envelope-open-text",
+            color: "from-pink-500 to-rose-600",
+            permissionKey: "newsletters",
+        },
+        {
             name: "FAQ Management",
             href: "/dashboard/faq",
             icon: "fas fa-question-circle",
