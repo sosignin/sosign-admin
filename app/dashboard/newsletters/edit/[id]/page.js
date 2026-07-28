@@ -68,7 +68,7 @@ export default function EditNewsletterPage() {
       } catch (err) {
         console.error("Error loading newsletter:", err);
         setError(err.message);
-      } font-medium {
+      } finally {
         setLoading(false);
       }
     };
