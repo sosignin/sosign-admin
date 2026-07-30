@@ -1,15 +1,182 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
+const LANGUAGES = [
+  { code: "default", name: "Original (Default)", native: "Original Text" },
+  { code: "en", name: "English", native: "English" },
+  { code: "hi", name: "Hindi", native: "हिंदी" },
+  { code: "bn", name: "Bengali", native: "বাংলা" },
+  { code: "mr", name: "Marathi", native: "मराठी" },
+  { code: "te", name: "Telugu", native: "తెలుగు" },
+  { code: "ta", name: "Tamil", native: "தமிழ்" },
+  { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
+  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "ml", name: "Malayalam", native: "മലയാളം" },
+  { code: "pa", name: "Punjabi", native: "ਪੰਜਾਬੀ" },
+  { code: "or", name: "Odia", native: "ଓଡ଼ିଆ" },
+  { code: "as", name: "Assamese", native: "অসমীয়া" },
+  { code: "es", name: "Spanish", native: "Español" },
+  { code: "fr", name: "French", native: "Français" },
+  { code: "de", name: "German", native: "Deutsch" },
+  { code: "ar", name: "Arabic", native: "العربية" },
+];
 
 export default function PetitionApprovalPage() {
   const [petitions, setPetitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentLanguage, setCurrentLanguage] = useState("default");
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const langMenuRef = useRef(null);
 
   useEffect(() => {
     fetchUnapprovedPetitions();
   }, []);
+
+  useEffect(() => {
+    // Define callback before Google Translate script loads
+    window.googleTranslateElementInit = () => {
+      if (window.google?.translate) {
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: "auto",
+            includedLanguages: "hi,bn,en,mr,ta,te,gu,kn,ml,pa,or,as,es,fr,de,ar",
+            layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false,
+          },
+          "google_translate_element_approval"
+        );
+      }
+    };
+
+    // Inject Google Translate script if not present
+    if (!window.google?.translate && !document.getElementById("google-translate-script-approval")) {
+      const script = document.createElement("script");
+      script.id = "google-translate-script-approval";
+      script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      script.async = true;
+      document.body.appendChild(script);
+    } else if (window.google?.translate && !document.querySelector(".goog-te-combo")) {
+      window.googleTranslateElementInit();
+    }
+
+    // Detect language from cookie
+    const getCookie = (name) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    };
+    const langCookie = getCookie("googtrans");
+    if (langCookie) {
+      const lang = langCookie.split("/").pop();
+      if (lang && lang !== "en" && lang !== "auto") {
+        setCurrentLanguage(lang);
+      } else if (lang === "en") {
+        setCurrentLanguage("en");
+      }
+    }
+
+    // Inject CSS to hide Google Translate banner and tooltips
+    const style = document.createElement("style");
+    style.id = "google-translate-styles-approval";
+    style.innerHTML = `
+      .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
+      body { top: 0px !important; }
+      .goog-te-menu-value span:nth-child(5) { display: none !important; }
+      .goog-te-menu-value img { display: none !important; }
+      #google_translate_element_approval { 
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        height: 0;
+        width: 0;
+        overflow: hidden;
+      }
+      .VIpgJd-ZviZp-ORrt-ORrt-nU67Y { display: none !important; }
+      .goog-tooltip { display: none !important; }
+      .goog-tooltip:hover { display: none !important; }
+      .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    // Click outside handler for language menu
+    const handleClickOutside = (event) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const changeLanguage = (langCode) => {
+    const domain = window.location.hostname;
+
+    if (langCode === "default") {
+      // Clear cookie to restore original text
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain};`;
+
+      const findSelect = () =>
+        document.querySelector(".goog-te-combo") ||
+        document.querySelector("#google_translate_element_approval select") ||
+        document.querySelector("select.goog-te-combo");
+
+      const select = findSelect();
+      if (select) {
+        select.value = "";
+        select.dispatchEvent(new Event("change"));
+      }
+      setCurrentLanguage("default");
+      setIsLangOpen(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      return;
+    }
+
+    const cookieValue = `/auto/${langCode}`;
+    document.cookie = `googtrans=${cookieValue}; path=/;`;
+    document.cookie = `googtrans=${cookieValue}; path=/; domain=${domain};`;
+
+    const findSelect = () =>
+      document.querySelector(".goog-te-combo") ||
+      document.querySelector("#google_translate_element_approval select") ||
+      document.querySelector("select.goog-te-combo");
+
+    const select = findSelect();
+
+    if (select) {
+      select.value = langCode;
+      select.dispatchEvent(new Event("change"));
+      setCurrentLanguage(langCode);
+    } else {
+      let retries = 0;
+      const interval = setInterval(() => {
+        const retrySelect = findSelect();
+        if (retrySelect) {
+          retrySelect.value = langCode;
+          retrySelect.dispatchEvent(new Event("change"));
+          setCurrentLanguage(langCode);
+          clearInterval(interval);
+        }
+        if (++retries > 5) {
+          window.location.reload();
+          clearInterval(interval);
+        }
+      }, 300);
+    }
+    setIsLangOpen(false);
+  };
+
 
   const fetchUnapprovedPetitions = async () => {
     setLoading(true);
@@ -110,19 +277,80 @@ export default function PetitionApprovalPage() {
       </div>
     );
 
+  const selectedLangObj = LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0];
+
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
+      {/* Hidden container for Google Translate Widget */}
+      <div id="google_translate_element_approval"></div>
+
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -translate-y-14 translate-x-14"></div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-1">
                 Unapproved Petitions
               </h1>
               <p className="text-gray-600 font-medium">Review and approve pending petitions</p>
             </div>
+
+            {/* Language Translate Button & Dropdown */}
+            <div className="relative" ref={langMenuRef}>
+              <button
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-semibold text-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2.5 group"
+                title="Translate page content"
+              >
+                <i className="fas fa-language text-lg text-indigo-200 group-hover:scale-110 transition-transform"></i>
+                <span>Translate</span>
+                <span className="bg-white/20 text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                  {selectedLangObj.code}
+                </span>
+                <i className={`fas fa-chevron-down text-xs text-white/70 transition-transform duration-200 ${isLangOpen ? "rotate-180" : ""}`}></i>
+              </button>
+
+              {isLangOpen && (
+                <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50">
+                  <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-2xl">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <i className="fas fa-globe text-indigo-500"></i> Select Language
+                    </span>
+                    {currentLanguage !== "default" && (
+                      <button
+                        onClick={() => changeLanguage("default")}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline"
+                      >
+                        Reset (Original)
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto py-1 custom-scrollbar">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => changeLanguage(lang.code)}
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors ${
+                          currentLanguage === lang.code
+                            ? "bg-indigo-50 text-indigo-700 font-bold"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {currentLanguage === lang.code && (
+                            <i className="fas fa-check text-xs text-indigo-600"></i>
+                          )}
+                          {lang.name}
+                        </span>
+                        <span className="text-xs text-gray-400 font-normal">{lang.native}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
           {petitions.length === 0 ? (
             <div className="text-center py-16">
               <div className="relative inline-block">
@@ -166,6 +394,15 @@ export default function PetitionApprovalPage() {
                                 <i className="fas fa-clock text-[8px]"></i>
                                 {new Date(petition.createdAt).toLocaleDateString()}
                               </span>
+                              {/* Card Translate Pill Button */}
+                              <button
+                                onClick={() => setIsLangOpen(true)}
+                                className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                title="Translate this petition"
+                              >
+                                <i className="fas fa-language text-[10px]"></i>
+                                Translate ({currentLanguage.toUpperCase()})
+                              </button>
                             </div>
                           </div>
                         </div>

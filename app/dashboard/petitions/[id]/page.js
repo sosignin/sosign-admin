@@ -1,9 +1,29 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import AdminCommentsSection from "../../../../components/AdminCommentsSection";
+
+const LANGUAGES = [
+  { code: "default", name: "Original (Default)", native: "Original Text" },
+  { code: "en", name: "English", native: "English" },
+  { code: "hi", name: "Hindi", native: "हिंदी" },
+  { code: "bn", name: "Bengali", native: "বাংলা" },
+  { code: "mr", name: "Marathi", native: "मराठी" },
+  { code: "te", name: "Telugu", native: "తెలుగు" },
+  { code: "ta", name: "Tamil", native: "தமிழ்" },
+  { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
+  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "ml", name: "Malayalam", native: "മലയാളം" },
+  { code: "pa", name: "Punjabi", native: "ਪੰਜਾਬੀ" },
+  { code: "or", name: "Odia", native: "ଓଡ଼ିଆ" },
+  { code: "as", name: "Assamese", native: "অসমীয়া" },
+  { code: "es", name: "Spanish", native: "Español" },
+  { code: "fr", name: "French", native: "Français" },
+  { code: "de", name: "German", native: "Deutsch" },
+  { code: "ar", name: "Arabic", native: "العربية" },
+];
 
 export default function PetitionDetailPage() {
   const router = useRouter();
@@ -12,6 +32,9 @@ export default function PetitionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState("default");
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const langMenuRef = useRef(null);
 
   // Signatures pagination state
   const [allSignatures, setAllSignatures] = useState([]);
@@ -19,6 +42,149 @@ export default function PetitionDetailPage() {
   const [signaturesTotalPages, setSignaturesTotalPages] = useState(1);
   const [signaturesTotalCount, setSignaturesTotalCount] = useState(0);
   const [signaturesLoading, setSignaturesLoading] = useState(false);
+
+  useEffect(() => {
+    // Define callback before Google Translate script loads
+    window.googleTranslateElementInit = () => {
+      if (window.google?.translate) {
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: "auto",
+            includedLanguages: "hi,bn,en,mr,ta,te,gu,kn,ml,pa,or,as,es,fr,de,ar",
+            layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false,
+          },
+          "google_translate_element_detail"
+        );
+      }
+    };
+
+    // Inject Google Translate script if not present
+    if (!window.google?.translate && !document.getElementById("google-translate-script-detail")) {
+      const script = document.createElement("script");
+      script.id = "google-translate-script-detail";
+      script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      script.async = true;
+      document.body.appendChild(script);
+    } else if (window.google?.translate && !document.querySelector(".goog-te-combo")) {
+      window.googleTranslateElementInit();
+    }
+
+    // Detect language from cookie
+    const getCookie = (name) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    };
+    const langCookie = getCookie("googtrans");
+    if (langCookie) {
+      const lang = langCookie.split("/").pop();
+      if (lang && lang !== "en" && lang !== "auto") {
+        setCurrentLanguage(lang);
+      } else if (lang === "en") {
+        setCurrentLanguage("en");
+      }
+    }
+
+    // Inject CSS to hide Google Translate banner and tooltips
+    const style = document.createElement("style");
+    style.id = "google-translate-styles-detail";
+    style.innerHTML = `
+      .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
+      body { top: 0px !important; }
+      .goog-te-menu-value span:nth-child(5) { display: none !important; }
+      .goog-te-menu-value img { display: none !important; }
+      #google_translate_element_detail { 
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        height: 0;
+        width: 0;
+        overflow: hidden;
+      }
+      .VIpgJd-ZviZp-ORrt-ORrt-nU67Y { display: none !important; }
+      .goog-tooltip { display: none !important; }
+      .goog-tooltip:hover { display: none !important; }
+      .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    // Click outside handler for language menu
+    const handleClickOutside = (event) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const changeLanguage = (langCode) => {
+    const domain = window.location.hostname;
+
+    if (langCode === "default") {
+      // Clear cookie to restore original text
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain};`;
+
+      const findSelect = () =>
+        document.querySelector(".goog-te-combo") ||
+        document.querySelector("#google_translate_element_detail select") ||
+        document.querySelector("select.goog-te-combo");
+
+      const select = findSelect();
+      if (select) {
+        select.value = "";
+        select.dispatchEvent(new Event("change"));
+      }
+      setCurrentLanguage("default");
+      setIsLangOpen(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      return;
+    }
+
+    const cookieValue = `/auto/${langCode}`;
+    document.cookie = `googtrans=${cookieValue}; path=/;`;
+    document.cookie = `googtrans=${cookieValue}; path=/; domain=${domain};`;
+
+    const findSelect = () =>
+      document.querySelector(".goog-te-combo") ||
+      document.querySelector("#google_translate_element_detail select") ||
+      document.querySelector("select.goog-te-combo");
+
+    const select = findSelect();
+
+    if (select) {
+      select.value = langCode;
+      select.dispatchEvent(new Event("change"));
+      setCurrentLanguage(langCode);
+    } else {
+      let retries = 0;
+      const interval = setInterval(() => {
+        const retrySelect = findSelect();
+        if (retrySelect) {
+          retrySelect.value = langCode;
+          retrySelect.dispatchEvent(new Event("change"));
+          setCurrentLanguage(langCode);
+          clearInterval(interval);
+        }
+        if (++retries > 5) {
+          window.location.reload();
+          clearInterval(interval);
+        }
+      }, 300);
+    }
+    setIsLangOpen(false);
+  };
 
   // Fetch petition details
   const fetchPetition = useCallback(async () => {
@@ -199,8 +365,13 @@ export default function PetitionDetailPage() {
     );
   }
 
+  const selectedLangObj = LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0];
+
   return (
     <div className="space-y-6">
+      {/* Hidden container for Google Translate Widget */}
+      <div id="google_translate_element_detail"></div>
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -225,23 +396,80 @@ export default function PetitionDetailPage() {
               </div>
             </div>
           </div>
-          <button
-            onClick={handleDeletePetition}
-            disabled={deleteLoading}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 font-medium"
-          >
-            {deleteLoading ? (
-              <>
-                <i className="fas fa-spinner animate-spin"></i>
-                Deleting...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-trash"></i>
-                Delete Petition
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Language Translate Button & Dropdown */}
+            <div className="relative" ref={langMenuRef}>
+              <button
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-semibold text-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2.5 group"
+                title="Translate page content"
+              >
+                <i className="fas fa-language text-lg text-indigo-200 group-hover:scale-110 transition-transform"></i>
+                <span>Translate</span>
+                <span className="bg-white/20 text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                  {selectedLangObj.code}
+                </span>
+                <i className={`fas fa-chevron-down text-xs text-white/70 transition-transform duration-200 ${isLangOpen ? "rotate-180" : ""}`}></i>
+              </button>
+
+              {isLangOpen && (
+                <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50">
+                  <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-2xl">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <i className="fas fa-globe text-indigo-500"></i> Select Language
+                    </span>
+                    {currentLanguage !== "default" && (
+                      <button
+                        onClick={() => changeLanguage("default")}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline"
+                      >
+                        Reset (Original)
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto py-1 custom-scrollbar">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => changeLanguage(lang.code)}
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors ${
+                          currentLanguage === lang.code
+                            ? "bg-indigo-50 text-indigo-700 font-bold"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {currentLanguage === lang.code && (
+                            <i className="fas fa-check text-xs text-indigo-600"></i>
+                          )}
+                          {lang.name}
+                        </span>
+                        <span className="text-xs text-gray-400 font-normal">{lang.native}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleDeletePetition}
+              disabled={deleteLoading}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 font-medium"
+            >
+              {deleteLoading ? (
+                <>
+                  <i className="fas fa-spinner animate-spin"></i>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-trash"></i>
+                  Delete Petition
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
