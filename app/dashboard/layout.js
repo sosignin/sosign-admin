@@ -99,6 +99,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "petitions",
         },
         {
+            name: "Banner Slider",
+            href: "/dashboard/banner-management",
+            icon: "fas fa-images",
+            color: "from-pink-500 to-rose-600",
+            permissionKey: "petitions",
+        },
+        {
             name: "Successful Petitions",
             href: "/dashboard/successfulpetitions",
             icon: "fas fa-trophy",

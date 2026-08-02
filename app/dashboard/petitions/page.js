@@ -83,6 +83,27 @@ export default function PetitionsPage() {
     }
   };
 
+  // Toggle banner featured status
+  const handleToggleBanner = async (e, petitionId, currentStatus) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${petitionId}/banner-feature`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ isFeaturedInBanner: !currentStatus }),
+        }
+      );
+      if (res.ok) {
+        await fetchPetitions(currentPage, search, selectedCountry);
+      }
+    } catch (err) {
+      console.error("Failed to update banner status:", err);
+    }
+  };
+
   // Handle petition click to view details
   const handlePetitionClick = (petitionId) => {
     router.push(`/dashboard/petitions/${petitionId}`);
@@ -382,6 +403,19 @@ export default function PetitionsPage() {
                             PDF
                           </>
                         )}
+                      </button>
+                      {/* Banner Feature Toggle Button */}
+                      <button
+                        onClick={(e) => handleToggleBanner(e, petition._id, petition.isFeaturedInBanner)}
+                        className={`px-3 py-2 rounded-lg font-medium text-xs transition-all duration-200 shadow-sm flex items-center gap-1.5 ${
+                          petition.isFeaturedInBanner
+                            ? "bg-pink-600 text-white hover:bg-pink-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-pink-50 hover:text-pink-600 border border-gray-300"
+                        }`}
+                        title={petition.isFeaturedInBanner ? "Remove from Banner" : "Add to Homepage Banner Slider"}
+                      >
+                        <i className="fas fa-star text-xs"></i>
+                        {petition.isFeaturedInBanner ? "Banner" : "+ Banner"}
                       </button>
                       {/* Delete Button */}
                       <button
