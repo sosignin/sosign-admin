@@ -106,6 +106,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "petitions",
         },
         {
+            name: "Stall Reports 🚨",
+            href: "/dashboard/stall-reports",
+            icon: "fas fa-[#E63946] fa-store-slash",
+            color: "from-red-600 to-amber-600",
+            permissionKey: "petitions",
+        },
+        {
             name: "Successful Petitions",
             href: "/dashboard/successfulpetitions",
             icon: "fas fa-trophy",

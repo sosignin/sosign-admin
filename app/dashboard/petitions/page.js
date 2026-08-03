@@ -104,6 +104,27 @@ export default function PetitionsPage() {
     }
   };
 
+  // Toggle school stall map visibility
+  const handleToggleSchoolStallMap = async (e, petitionId, currentStatus) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${petitionId}/school-stall-map`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ showSchoolStallMap: !currentStatus }),
+        }
+      );
+      if (res.ok) {
+        await fetchPetitions(currentPage, search, selectedCountry);
+      }
+    } catch (err) {
+      console.error("Failed to update school stall map status:", err);
+    }
+  };
+
   // Handle petition click to view details
   const handlePetitionClick = (petitionId) => {
     router.push(`/dashboard/petitions/${petitionId}`);
@@ -416,6 +437,19 @@ export default function PetitionsPage() {
                       >
                         <i className="fas fa-star text-xs"></i>
                         {petition.isFeaturedInBanner ? "Banner" : "+ Banner"}
+                      </button>
+                      {/* School Stall Map Toggle Button */}
+                      <button
+                        onClick={(e) => handleToggleSchoolStallMap(e, petition._id, petition.showSchoolStallMap)}
+                        className={`px-3 py-2 rounded-lg font-medium text-xs transition-all duration-200 shadow-sm flex items-center gap-1.5 ${
+                          petition.showSchoolStallMap
+                            ? "bg-red-600 text-white hover:bg-red-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-300"
+                        }`}
+                        title={petition.showSchoolStallMap ? "Remove School Stall Map" : "Add School Stall Map to this Petition"}
+                      >
+                        <i className="fas fa-school text-xs"></i>
+                        {petition.showSchoolStallMap ? "School Map" : "+ School Map"}
                       </button>
                       {/* Delete Button */}
                       <button
