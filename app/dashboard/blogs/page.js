@@ -226,7 +226,7 @@ export default function BlogManagementPage() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="font-medium text-gray-800 truncate max-w-[200px]">
-                                                        {blog.title}
+                                                        {blog.title ? String(blog.title).replace(/<[^>]*>/g, "").trim() : ""}
                                                     </p>
                                                     <p className="text-sm text-gray-500">{blog.category}</p>
                                                 </div>
