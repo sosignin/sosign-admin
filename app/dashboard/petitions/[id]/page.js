@@ -36,6 +36,12 @@ export default function PetitionDetailPage() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const langMenuRef = useRef(null);
 
+  // SEO Slug state
+  const [slug, setSlug] = useState("");
+  const [slugSaving, setSlugSaving] = useState(false);
+  const [slugSuccess, setSlugSuccess] = useState("");
+  const [slugError, setSlugError] = useState("");
+
   // Signatures pagination state
   const [allSignatures, setAllSignatures] = useState([]);
   const [signaturesPage, setSignaturesPage] = useState(1);
@@ -205,6 +211,7 @@ export default function PetitionDetailPage() {
 
       const data = await response.json();
       setPetition(data);
+      setSlug(data.slug || "");
     } catch (err) {
       setError("Failed to load petition: " + err.message);
     } finally {
@@ -243,6 +250,48 @@ export default function PetitionDetailPage() {
     },
     [params.id]
   );
+
+  // Handle SEO Slug Update
+  const handleUpdateSlug = async (e) => {
+    e.preventDefault();
+    setSlugSaving(true);
+    setSlugSuccess("");
+    setSlugError("");
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${params.id}/slug`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slug }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update URL slug");
+
+      setPetition((prev) => ({ ...prev, slug: data.slug }));
+      setSlug(data.slug);
+      setSlugSuccess("SEO URL slug updated successfully!");
+      setTimeout(() => setSlugSuccess(""), 4000);
+    } catch (err) {
+      setSlugError(err.message);
+    } finally {
+      setSlugSaving(false);
+    }
+  };
+
+  const handleResetSlugFromTitle = () => {
+    if (petition?.title) {
+      const auto = petition.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      setSlug(auto);
+    }
+  };
 
   // Delete petition
   const handleDeletePetition = async () => {
@@ -497,6 +546,64 @@ export default function PetitionDetailPage() {
                   <p className="text-lg font-medium text-gray-900">
                     {petition.title}
                   </p>
+                </div>
+
+                {/* SEO Permalink / URL Slug Editor */}
+                <div className="bg-slate-50 border border-gray-200 rounded-2xl p-5 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i className="fas fa-link text-cyan-600"></i>
+                        SEO Permalink / URL Slug
+                      </label>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Custom search-engine friendly web address for this petition.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetSlugFromTitle}
+                      className="text-xs font-semibold text-cyan-600 hover:text-cyan-700 bg-cyan-100/60 hover:bg-cyan-100 px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                      title="Auto-generate URL slug from title"
+                    >
+                      <i className="fas fa-sync-alt text-[10px]"></i>
+                      Generate from Title
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleUpdateSlug} className="space-y-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white border border-gray-300 rounded-xl px-3.5 py-2 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
+                      <span className="text-xs font-semibold text-gray-400 select-none whitespace-nowrap">
+                        sosign.in/currentpetitions/
+                      </span>
+                      <input
+                        type="text"
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-"))}
+                        placeholder="custom-petition-slug"
+                        className="w-full bg-transparent outline-none text-sm font-mono font-medium text-slate-800 placeholder:text-gray-300"
+                      />
+                      <button
+                        type="submit"
+                        disabled={slugSaving}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap flex items-center gap-1.5 justify-center"
+                      >
+                        {slugSaving ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
+                        Save SEO Slug
+                      </button>
+                    </div>
+
+                    {slugSuccess && (
+                      <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+                        <i className="fas fa-check-circle"></i> {slugSuccess}
+                      </p>
+                    )}
+                    {slugError && (
+                      <p className="text-xs font-semibold text-red-500 flex items-center gap-1.5">
+                        <i className="fas fa-exclamation-circle"></i> {slugError}
+                      </p>
+                    )}
+                  </form>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

@@ -16,6 +16,13 @@ export default function PetitionsPage() {
   const [search, setSearch] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
 
+  // SEO Slug modal state
+  const [editingSlugPetition, setEditingSlugPetition] = useState(null);
+  const [slugInputValue, setSlugInputValue] = useState("");
+  const [slugSaveLoading, setSlugSaveLoading] = useState(false);
+  const [slugModalError, setSlugModalError] = useState("");
+  const [slugModalSuccess, setSlugModalSuccess] = useState("");
+
   // Fetch petitions from backend
   const fetchPetitions = async (page = 1, searchTerm = "", country = "") => {
     try {
@@ -100,7 +107,62 @@ export default function PetitionsPage() {
         await fetchPetitions(currentPage, search, selectedCountry);
       }
     } catch (err) {
-      console.error("Failed to update banner status:", err);
+      console.error("Error toggling banner status:", err);
+    }
+  };
+
+  // Open SEO Slug modal
+  const handleOpenSlugModal = (e, petition) => {
+    e.stopPropagation();
+    setEditingSlugPetition(petition);
+    setSlugInputValue(petition.slug || "");
+    setSlugModalError("");
+    setSlugModalSuccess("");
+  };
+
+  // Reset slug from title in modal
+  const handleResetModalSlugFromTitle = () => {
+    if (editingSlugPetition?.title) {
+      const auto = editingSlugPetition.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      setSlugInputValue(auto);
+    }
+  };
+
+  // Save SEO Slug from modal
+  const handleSaveModalSlug = async (e) => {
+    e.preventDefault();
+    if (!editingSlugPetition) return;
+
+    setSlugSaveLoading(true);
+    setSlugModalError("");
+    setSlugModalSuccess("");
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${editingSlugPetition._id}/slug`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slug: slugInputValue }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update SEO slug");
+
+      setSlugModalSuccess("SEO URL slug updated successfully!");
+      await fetchPetitions(currentPage, search, selectedCountry);
+      setTimeout(() => {
+        setEditingSlugPetition(null);
+      }, 1200);
+    } catch (err) {
+      setSlugModalError(err.message);
+    } finally {
+      setSlugSaveLoading(false);
     }
   };
 
@@ -438,6 +500,15 @@ export default function PetitionsPage() {
                         <i className="fas fa-star text-xs"></i>
                         {petition.isFeaturedInBanner ? "Banner" : "+ Banner"}
                       </button>
+                      {/* Edit SEO Slug Button */}
+                      <button
+                        onClick={(e) => handleOpenSlugModal(e, petition)}
+                        className="px-3 py-2 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200 rounded-lg font-medium text-xs transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        title="Edit SEO URL Slug"
+                      >
+                        <i className="fas fa-link text-xs"></i>
+                        SEO Slug
+                      </button>
                       {/* School Stall Map Toggle Button */}
                       <button
                         onClick={(e) => handleToggleSchoolStallMap(e, petition._id, petition.showSchoolStallMap)}
@@ -605,6 +676,95 @@ export default function PetitionsPage() {
                 </button>
               </nav>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Edit SEO Slug Modal */}
+      {editingSlugPetition && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <i className="fas fa-link text-cyan-600"></i>
+                  Edit SEO URL Slug
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Update web address permalink for search engines.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSlugPetition(null)}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
+              >
+                <i className="fas fa-times text-base"></i>
+              </button>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-2xl border border-gray-100 text-xs text-gray-600">
+              <span className="font-semibold text-slate-700">Petition: </span>
+              {editingSlugPetition.title}
+            </div>
+
+            <form onSubmit={handleSaveModalSlug} className="space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700">
+                    URL Slug (SEO Permalink)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleResetModalSlugFromTitle}
+                    className="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700 underline cursor-pointer"
+                  >
+                    Reset from Title
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-50 border border-gray-300 rounded-xl px-3 py-2.5 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
+                  <span className="text-xs font-semibold text-gray-400 select-none whitespace-nowrap">
+                    sosign.in/currentpetitions/
+                  </span>
+                  <input
+                    type="text"
+                    value={slugInputValue}
+                    onChange={(e) => setSlugInputValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-"))}
+                    placeholder="my-custom-seo-slug"
+                    className="w-full bg-transparent outline-none text-xs font-mono font-medium text-slate-800 placeholder:text-gray-300"
+                    required
+                  />
+                </div>
+              </div>
+
+              {slugModalSuccess && (
+                <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+                  <i className="fas fa-check-circle"></i> {slugModalSuccess}
+                </p>
+              )}
+              {slugModalError && (
+                <p className="text-xs font-semibold text-red-500 flex items-center gap-1.5">
+                  <i className="fas fa-exclamation-circle"></i> {slugModalError}
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingSlugPetition(null)}
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={slugSaveLoading}
+                  className="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {slugSaveLoading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
+                  Save SEO Slug
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
