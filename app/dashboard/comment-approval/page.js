@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "../../../utils/api";
 
 export default function CommentApprovalPage() {
     const [comments, setComments] = useState([]);
@@ -14,13 +15,9 @@ export default function CommentApprovalPage() {
     const fetchUnapprovedComments = async () => {
         setLoading(true);
         try {
-            const res = await fetch(
+            const res = await authFetch(
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-                }/api/comments/admin/unapproved`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
+                }/api/comments/admin/unapproved`
             );
             const data = await res.json();
             setComments(data.comments || []);
@@ -32,21 +29,21 @@ export default function CommentApprovalPage() {
 
     const approveComment = async (id) => {
         try {
-            const res = await fetch(
+            const res = await authFetch(
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
                 }/api/comments/admin/${id}/approve`,
                 {
                     method: "PUT",
-                    credentials: "include",
                 }
             );
             if (res.ok) {
                 setComments((prev) => prev.filter((c) => c._id !== id));
             } else {
-                alert("Failed to approve comment");
+                const errorData = await res.json().catch(() => ({}));
+                alert("Failed to approve comment: " + (errorData.message || res.statusText));
             }
         } catch (err) {
-            alert("Failed to approve comment");
+            alert("Failed to approve comment: " + err.message);
         }
     };
 
@@ -55,19 +52,23 @@ export default function CommentApprovalPage() {
             return;
         }
         try {
-            const res = await fetch(
+            const res = await authFetch(
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
                 }/api/comments/admin/${id}/reject`,
                 {
                     method: "DELETE",
-                    credentials: "include",
                 }
             );
             if (res.ok) {
                 setComments((prev) => prev.filter((c) => c._id !== id));
             } else {
-                alert("Failed to reject comment");
+                const errorData = await res.json().catch(() => ({}));
+                alert("Failed to reject comment: " + (errorData.message || res.statusText));
             }
+        } catch (err) {
+            alert("Failed to reject comment: " + err.message);
+        }
+    };
         } catch (err) {
             alert("Failed to reject comment");
         }

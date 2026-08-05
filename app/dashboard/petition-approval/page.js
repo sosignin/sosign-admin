@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 
+import { authFetch } from "../../../utils/api";
+
 const LANGUAGES = [
   { code: "default", name: "Original (Default)", native: "Original Text" },
   { code: "en", name: "English", native: "English" },
@@ -181,14 +183,10 @@ export default function PetitionApprovalPage() {
   const fetchUnapprovedPetitions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/admin/petitions/unapproved`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
+        }/api/admin/petitions/unapproved`
       );
       const data = await res.json();
       setPetitions(data.petitions || []);
@@ -200,22 +198,22 @@ export default function PetitionApprovalPage() {
 
   const approvePetition = async (id) => {
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
         }/api/admin/petitions/${id}/approve`,
         {
           method: "PUT",
-          credentials: "include",
         }
       );
       if (res.ok) {
         setPetitions((prev) => prev.filter((p) => p._id !== id));
       } else {
-        alert("Failed to approve petition");
+        const errorData = await res.json().catch(() => ({}));
+        alert("Failed to approve petition: " + (errorData.message || res.statusText));
       }
     } catch (err) {
-      alert("Failed to approve petition");
+      alert("Failed to approve petition: " + err.message);
     }
   };
 
@@ -224,7 +222,7 @@ export default function PetitionApprovalPage() {
     if (reason === null) return; // Cancelled
 
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
         }/api/admin/petitions/${id}/reject`,
@@ -234,16 +232,16 @@ export default function PetitionApprovalPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ reason }),
-          credentials: "include",
         }
       );
       if (res.ok) {
         setPetitions((prev) => prev.filter((p) => p._id !== id));
       } else {
-        alert("Failed to reject petition");
+        const errorData = await res.json().catch(() => ({}));
+        alert("Failed to reject petition: " + (errorData.message || res.statusText));
       }
     } catch (err) {
-      alert("Failed to reject petition");
+      alert("Failed to reject petition: " + err.message);
     }
   };
 

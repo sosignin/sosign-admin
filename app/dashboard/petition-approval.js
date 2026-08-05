@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "../../utils/api";
 
 const PetitionApprovalPage = () => {
   const [petitions, setPetitions] = useState([]);
@@ -14,14 +15,10 @@ const PetitionApprovalPage = () => {
   const fetchUnapprovedPetitions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/admin/petitions/unapproved`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
+        }/api/admin/petitions/unapproved`
       );
       const data = await res.json();
       setPetitions(data.petitions || []);
@@ -33,22 +30,22 @@ const PetitionApprovalPage = () => {
 
   const approvePetition = async (id) => {
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
         }/api/admin/petitions/${id}/approve`,
         {
           method: "PUT",
-          credentials: "include",
         }
       );
       if (res.ok) {
         setPetitions((prev) => prev.filter((p) => p._id !== id));
       } else {
-        alert("Failed to approve petition");
+        const errorData = await res.json().catch(() => ({}));
+        alert("Failed to approve petition: " + (errorData.message || res.statusText));
       }
     } catch (err) {
-      alert("Failed to approve petition");
+      alert("Failed to approve petition: " + err.message);
     }
   };
 
