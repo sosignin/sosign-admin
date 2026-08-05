@@ -69,10 +69,6 @@ export default function CommentApprovalPage() {
             alert("Failed to reject comment: " + err.message);
         }
     };
-        } catch (err) {
-            alert("Failed to reject comment");
-        }
-    };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
