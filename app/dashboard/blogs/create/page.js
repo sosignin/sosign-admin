@@ -14,6 +14,8 @@ export default function CreateBlogPage() {
     const [titleFont, setTitleFont] = useState("'Outfit', sans-serif");
     const [formData, setFormData] = useState({
         title: "",
+        slug: "",
+        isSlugEdited: false,
         content: "",
         excerpt: "",
         author: "",
@@ -50,9 +52,47 @@ export default function CreateBlogPage() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        if (name === "title") {
+            const newTitle = value;
+            const autoSlug = newTitle
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, "");
+            setFormData((prev) => ({
+                ...prev,
+                title: newTitle,
+                slug: prev.isSlugEdited ? prev.slug : autoSlug,
+            }));
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: type === "checkbox" ? checked : value,
+            }));
+        }
+    };
+
+    const handleSlugChange = (e) => {
+        const rawSlug = e.target.value;
+        const cleanSlug = rawSlug
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, "")
+            .replace(/-+/g, "-");
         setFormData((prev) => ({
             ...prev,
-            [name]: type === "checkbox" ? checked : value,
+            slug: cleanSlug,
+            isSlugEdited: true,
+        }));
+    };
+
+    const resetSlugFromTitle = () => {
+        const autoSlug = formData.title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+        setFormData((prev) => ({
+            ...prev,
+            slug: autoSlug,
+            isSlugEdited: false,
         }));
     };
 
@@ -89,6 +129,7 @@ export default function CreateBlogPage() {
             const formDataToSend = new FormData();
             formDataToSend.append("title", cleanTitle);
             formDataToSend.append("titleFont", titleFont);
+            formDataToSend.append("slug", formData.slug);
             formDataToSend.append("content", formData.content);
             formDataToSend.append("excerpt", formData.excerpt);
             formDataToSend.append("author", formData.author);
@@ -215,6 +256,44 @@ export default function CreateBlogPage() {
                             style={{ fontFamily: titleFont }}
                             className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 outline-none text-xl md:text-2xl font-bold transition-all text-slate-900 placeholder:text-gray-300 placeholder:font-normal"
                         />
+                    </div>
+
+                    {/* SEO Permalink / Custom URL Slug */}
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <i className="fas fa-link text-cyan-600"></i>
+                                    SEO Permalink / URL Slug
+                                </label>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                    Custom search-engine friendly web address for this blog post.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={resetSlugFromTitle}
+                                className="text-xs font-semibold text-cyan-600 hover:text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                                title="Auto-generate URL slug from title"
+                            >
+                                <i className="fas fa-sync-alt text-[10px]"></i>
+                                Reset from Title
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
+                            <span className="text-xs font-semibold text-gray-400 select-none">
+                                sosign.org/blog/
+                            </span>
+                            <input
+                                type="text"
+                                name="slug"
+                                value={formData.slug}
+                                onChange={handleSlugChange}
+                                placeholder="my-custom-seo-url-slug"
+                                className="w-full bg-transparent outline-none text-sm font-mono font-medium text-slate-800 placeholder:text-gray-300"
+                            />
+                        </div>
                     </div>
 
                     {/* Excerpt Input */}
