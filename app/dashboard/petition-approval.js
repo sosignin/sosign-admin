@@ -35,7 +35,7 @@ const PetitionApprovalPage = () => {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
         }/api/admin/petitions/${id}/approve`,
         {
-          method: "PUT",
+          method: "POST",
         }
       );
       if (res.ok) {
