@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "../../../utils/api";
 
 export default function FAQManagementPage() {
   const [faqs, setFaqs] = useState([]);
@@ -20,20 +21,10 @@ export default function FAQManagementPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  const getHeaders = () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-    return {
-      "Content-Type": "application/json",
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    };
-  };
-
   const fetchFaqs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/faqs`, {
-        credentials: "include",
-      });
+      const res = await authFetch(`${apiUrl}/api/faqs`);
 
       if (!res.ok) throw new Error("Failed to fetch FAQs");
 
@@ -49,8 +40,7 @@ export default function FAQManagementPage() {
 
   useEffect(() => {
     fetchFaqs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiUrl]);
+  }, []);
 
   const handleOpenCreateModal = () => {
     setEditingId(null);
@@ -74,14 +64,10 @@ export default function FAQManagementPage() {
     if (!confirm("Are you sure you want to delete this FAQ?")) return;
 
     try {
-      const res = await fetch(`${apiUrl}/api/faqs/${id}`, {
-        method: "POST",
-        headers: {
-          ...getHeaders(),
-          "X-HTTP-Method-Override": "DELETE",
-        },
+      const res = await authFetch(`${apiUrl}/api/faqs/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ _action: "delete" }),
-        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Failed to delete FAQ");
@@ -111,14 +97,12 @@ export default function FAQManagementPage() {
       };
 
       const url = editingId ? `${apiUrl}/api/faqs/${editingId}` : `${apiUrl}/api/faqs`;
-      const method = "POST";
-      const headers = editingId ? { ...getHeaders(), "X-HTTP-Method-Override": "PUT" } : getHeaders();
+      const method = editingId ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include",
       });
 
       const data = await res.json();
