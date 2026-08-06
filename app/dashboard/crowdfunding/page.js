@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "../../utils/api";
 
 export default function CrowdfundingApproval() {
     const [campaigns, setCampaigns] = useState([]);
@@ -13,9 +14,7 @@ export default function CrowdfundingApproval() {
     const fetchCampaigns = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${apiUrl}/api/crowdfunding/admin/all`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${apiUrl}/api/crowdfunding/admin/all`);
             if (res.ok) {
                 const data = await res.json();
                 setCampaigns(data);
@@ -34,11 +33,10 @@ export default function CrowdfundingApproval() {
     const handleStatusUpdate = async (id, approved) => {
         try {
             setUpdatingId(id);
-            const res = await fetch(`${apiUrl}/api/crowdfunding/${id}/status`, {
+            const res = await authFetch(`${apiUrl}/api/crowdfunding/${id}/status`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ approved }),
-                credentials: "include",
             });
             if (res.ok) {
                 setCampaigns(campaigns.map(c => c._id === id ? { ...c, approved } : c));

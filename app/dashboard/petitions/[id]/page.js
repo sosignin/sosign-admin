@@ -1,9 +1,8 @@
-"use client";
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import AdminCommentsSection from "../../../../components/AdminCommentsSection";
+import { authFetch } from "../../../../utils/api";
 
 const LANGUAGES = [
   { code: "default", name: "Original (Default)", native: "Original Text" },
@@ -196,13 +195,10 @@ export default function PetitionDetailPage() {
   const fetchPetition = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(
+      const response = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/admin/petitions/${params.id}`,
-        {
-          credentials: "include", // Include admin cookies
-        }
+        }/api/admin/petitions/${params.id}`
       );
 
       if (!response.ok) {
@@ -224,13 +220,10 @@ export default function PetitionDetailPage() {
     async (page = 1) => {
       try {
         setSignaturesLoading(true);
-        const response = await fetch(
+        const response = await authFetch(
           `${
             process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-          }/api/admin/petitions/${params.id}/signatures?page=${page}&limit=20`,
-          {
-            credentials: "include",
-          }
+          }/api/admin/petitions/${params.id}/signatures?page=${page}&limit=20`
         );
 
         if (!response.ok) {
@@ -259,12 +252,11 @@ export default function PetitionDetailPage() {
     setSlugError("");
 
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${params.id}/slug`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ slug }),
         }
       );

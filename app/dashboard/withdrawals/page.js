@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "../../utils/api";
 
 export default function WithdrawalRequests() {
     const [withdrawals, setWithdrawals] = useState([]);
@@ -13,9 +14,7 @@ export default function WithdrawalRequests() {
     const fetchWithdrawals = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${apiUrl}/api/withdrawals`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${apiUrl}/api/withdrawals`);
             if (res.ok) {
                 const data = await res.json();
                 setWithdrawals(data);
@@ -34,11 +33,10 @@ export default function WithdrawalRequests() {
     const handleUpdate = async (id, status) => {
         try {
             setUpdatingId(id);
-            const res = await fetch(`${apiUrl}/api/withdrawals/${id}`, {
+            const res = await authFetch(`${apiUrl}/api/withdrawals/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status, adminMessage: message }),
-                credentials: "include",
             });
             if (res.ok) {
                 setWithdrawals(withdrawals.map(w => w._id === id ? { ...w, status, adminMessage: message } : w));

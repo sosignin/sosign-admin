@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "../../utils/api";
 
 export default function RejectedPetitionsPage() {
   const [petitions, setPetitions] = useState([]);
@@ -14,14 +15,10 @@ export default function RejectedPetitionsPage() {
   const fetchRejectedPetitions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/admin/petitions/rejected`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
+        }/api/admin/petitions/rejected`
       );
       const data = await res.json();
       setPetitions(data.petitions || []);
@@ -35,11 +32,10 @@ export default function RejectedPetitionsPage() {
     if (!window.confirm("Are you sure you want to move this petition back to the approval queue?")) return;
     
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${id}/reset`,
         {
           method: "PUT",
-          credentials: "include",
         }
       );
       if (res.ok) {

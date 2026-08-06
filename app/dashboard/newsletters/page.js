@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { authFetch } from "../../../utils/api";
 
 export default function NewsletterManagementPage() {
   const [activeTab, setActiveTab] = useState("issues"); // "issues" or "subscribers"
@@ -18,13 +19,7 @@ export default function NewsletterManagementPage() {
     setLoading(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const res = await fetch(`${apiUrl}/api/newsletters/admin/all?page=${currentPage}&limit=10`, {
-        headers,
-        credentials: "include",
-      });
+      const res = await authFetch(`${apiUrl}/api/newsletters/admin/all?page=${currentPage}&limit=10`);
 
       if (!res.ok) throw new Error("Failed to fetch newsletters");
 
@@ -44,14 +39,8 @@ export default function NewsletterManagementPage() {
     setLoading(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
       const searchParam = subscriberSearch ? `&search=${encodeURIComponent(subscriberSearch)}` : "";
-      const res = await fetch(`${apiUrl}/api/newsletters/admin/subscribers?page=${currentPage}&limit=20${searchParam}`, {
-        headers,
-        credentials: "include",
-      });
+      const res = await authFetch(`${apiUrl}/api/newsletters/admin/subscribers?page=${currentPage}&limit=20${searchParam}`);
 
       if (!res.ok) throw new Error("Failed to fetch subscribers");
 
@@ -79,13 +68,10 @@ export default function NewsletterManagementPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const res = await fetch(`${apiUrl}/api/newsletters/${id}`, {
+      const res = await authFetch(`${apiUrl}/api/newsletters/${id}`, {
         method: "DELETE",
-        headers,
-        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _action: "delete" }),
       });
 
       if (!res.ok) throw new Error("Failed to delete newsletter");
@@ -100,13 +86,8 @@ export default function NewsletterManagementPage() {
   const togglePublished = async (id) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const res = await fetch(`${apiUrl}/api/newsletters/${id}/publish`, {
-        method: "PATCH",
-        headers,
-        credentials: "include",
+      const res = await authFetch(`${apiUrl}/api/newsletters/${id}/publish`, {
+        method: "POST",
       });
 
       if (!res.ok) throw new Error("Failed to toggle status");
@@ -122,13 +103,10 @@ export default function NewsletterManagementPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const res = await fetch(`${apiUrl}/api/newsletters/admin/subscribers/${id}`, {
+      const res = await authFetch(`${apiUrl}/api/newsletters/admin/subscribers/${id}`, {
         method: "DELETE",
-        headers,
-        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _action: "delete" }),
       });
 
       if (!res.ok) throw new Error("Failed to delete subscriber");

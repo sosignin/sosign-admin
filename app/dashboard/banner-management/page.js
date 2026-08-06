@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "../../utils/api";
 
 export default function BannerManagementPage() {
   const router = useRouter();
@@ -21,9 +22,7 @@ export default function BannerManagementPage() {
   const fetchBannerPetitions = async () => {
     try {
       setLoadingBanner(true);
-      const res = await fetch(`${apiUrl}/api/admin/petitions/banner`, {
-        credentials: "include",
-      });
+      const res = await authFetch(`${apiUrl}/api/admin/petitions/banner`);
       if (res.ok) {
         const data = await res.json();
         setBannerPetitions(data.petitions || []);
@@ -45,9 +44,7 @@ export default function BannerManagementPage() {
         ...(searchTerm && { search: searchTerm }),
       });
 
-      const res = await fetch(`${apiUrl}/api/admin/petitions?${queryParams}`, {
-        credentials: "include",
-      });
+      const res = await authFetch(`${apiUrl}/api/admin/petitions?${queryParams}`);
       if (res.ok) {
         const data = await res.json();
         setAllPetitions(data.petitions || []);
@@ -76,10 +73,9 @@ export default function BannerManagementPage() {
     try {
       setActionLoading(petitionId);
       const newStatus = !currentFeaturedStatus;
-      const res = await fetch(`${apiUrl}/api/admin/petitions/${petitionId}/banner-feature`, {
+      const res = await authFetch(`${apiUrl}/api/admin/petitions/${petitionId}/banner-feature`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           isFeaturedInBanner: newStatus,
           bannerOrder: currentOrder,
@@ -104,10 +100,9 @@ export default function BannerManagementPage() {
     const newOrder = direction === "up" ? currentOrder - 1 : currentOrder + 1;
     try {
       setActionLoading(petitionId);
-      const res = await fetch(`${apiUrl}/api/admin/petitions/${petitionId}/banner-feature`, {
+      const res = await authFetch(`${apiUrl}/api/admin/petitions/${petitionId}/banner-feature`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           isFeaturedInBanner: true,
           bannerOrder: newOrder,

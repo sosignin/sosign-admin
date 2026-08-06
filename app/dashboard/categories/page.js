@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { authFetch } from "../../../utils/api";
 
 export default function CategoryManagement() {
     const [categories, setCategories] = useState([]);
@@ -45,7 +46,7 @@ export default function CategoryManagement() {
         try {
             setCreateLoading(true);
             setCreateError(null);
-            const res = await fetch(`${apiUrl}/api/admin/categories`, {
+            const res = await authFetch(`${apiUrl}/api/admin/categories`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -54,7 +55,6 @@ export default function CategoryManagement() {
                     name: newCategoryName.trim(),
                     icon: newCategoryIcon
                 }),
-                credentials: "include"
             });
             const data = await res.json();
             if (data.success) {
@@ -78,9 +78,7 @@ export default function CategoryManagement() {
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${apiUrl}/api/admin/categories`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${apiUrl}/api/admin/categories`);
             const data = await res.json();
             if (data.success) {
                 setCategories(data.categories);
@@ -112,14 +110,14 @@ export default function CategoryManagement() {
 
         try {
             setDeleteLoading(categoryId);
-            const res = await fetch(`${apiUrl}/api/admin/categories/${categoryId}`, {
+            const res = await authFetch(`${apiUrl}/api/admin/categories/${categoryId}`, {
                 method: "DELETE",
-                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ _action: "delete" }),
             });
             const data = await res.json();
             if (data.success) {
                 setCategories(categories.filter(c => c._id !== categoryId));
-                // Optional: show a success toast if you have a toast system
             } else {
                 alert(data.message || "Failed to delete category");
             }

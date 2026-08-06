@@ -1,7 +1,6 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { authFetch } from "../../../utils/api";
 
 export default function BlogManagementPage() {
     const [blogs, setBlogs] = useState([]);
@@ -14,9 +13,7 @@ export default function BlogManagementPage() {
         setLoading(true);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/api/blogs/admin/all?page=${currentPage}&limit=10`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${apiUrl}/api/blogs/admin/all?page=${currentPage}&limit=10`);
 
             if (!res.ok) throw new Error("Failed to fetch blogs");
 
@@ -40,9 +37,10 @@ export default function BlogManagementPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/api/blogs/${id}`, {
+            const res = await authFetch(`${apiUrl}/api/blogs/${id}`, {
                 method: "DELETE",
-                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ _action: "delete" }),
             });
 
             if (!res.ok) throw new Error("Failed to delete blog");
@@ -57,9 +55,8 @@ export default function BlogManagementPage() {
     const toggleFeatured = async (id) => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/api/blogs/${id}/featured`, {
-                method: "PATCH",
-                credentials: "include",
+            const res = await authFetch(`${apiUrl}/api/blogs/${id}/featured`, {
+                method: "POST",
             });
 
             if (!res.ok) throw new Error("Failed to toggle featured");
@@ -73,9 +70,8 @@ export default function BlogManagementPage() {
     const togglePublished = async (id) => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/api/blogs/${id}/publish`, {
-                method: "PATCH",
-                credentials: "include",
+            const res = await authFetch(`${apiUrl}/api/blogs/${id}/publish`, {
+                method: "POST",
             });
 
             if (!res.ok) throw new Error("Failed to toggle published");

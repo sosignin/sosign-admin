@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "../../../utils/api";
 
 export default function HideRequestsPage() {
     const router = useRouter();
@@ -27,11 +28,8 @@ export default function HideRequestsPage() {
                 ...(status && { status }),
             });
 
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/hide-requests?${queryParams}`,
-                {
-                    credentials: "include",
-                }
+            const response = await authFetch(
+                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/hide-requests?${queryParams}`
             );
 
             if (!response.ok) {
@@ -54,14 +52,13 @@ export default function HideRequestsPage() {
     const handleAction = async (requestId, action) => {
         try {
             setActionLoading(requestId);
-            const response = await fetch(
+            const response = await authFetch(
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/hide-requests/${requestId}/${action}`,
                 {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    credentials: "include",
                     body: JSON.stringify({ adminNote }),
                 }
             );

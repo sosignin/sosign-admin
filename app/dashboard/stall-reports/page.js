@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "../../../utils/api";
 
 export default function AdminStallReportsPage() {
   const [reports, setReports] = useState([]);
@@ -15,9 +16,7 @@ export default function AdminStallReportsPage() {
   const fetchReports = async (status = statusFilter) => {
     try {
       setLoading(true);
-      const res = await fetch(`${apiUrl}/api/stall-reports/admin/reports?status=${status}`, {
-        credentials: "include",
-      });
+      const res = await authFetch(`${apiUrl}/api/stall-reports/admin/reports?status=${status}`);
       if (res.ok) {
         const data = await res.json();
         setReports(data.reports || []);
@@ -36,9 +35,8 @@ export default function AdminStallReportsPage() {
   const handleApprove = async (reportId) => {
     try {
       setActionLoading(reportId);
-      const res = await fetch(`${apiUrl}/api/stall-reports/admin/${reportId}/approve`, {
+      const res = await authFetch(`${apiUrl}/api/stall-reports/admin/${reportId}/approve`, {
         method: "PUT",
-        credentials: "include",
       });
       if (res.ok) {
         await fetchReports(statusFilter);
@@ -58,10 +56,9 @@ export default function AdminStallReportsPage() {
 
     try {
       setActionLoading(rejectModalId);
-      const res = await fetch(`${apiUrl}/api/stall-reports/admin/${rejectModalId}/reject`, {
+      const res = await authFetch(`${apiUrl}/api/stall-reports/admin/${rejectModalId}/reject`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ reason: rejectReason }),
       });
       if (res.ok) {

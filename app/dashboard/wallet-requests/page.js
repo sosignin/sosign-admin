@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { authFetch } from "../../../utils/api";
 
 export default function WalletRequestsPage() {
     const [requests, setRequests] = useState([]);
@@ -14,9 +15,7 @@ export default function WalletRequestsPage() {
         setLoading(true);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/api/wallet-requests/admin/all${filter ? `?status=${filter}` : ""}`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${apiUrl}/api/wallet-requests/admin/all${filter ? `?status=${filter}` : ""}`);
             const data = await res.json();
             if (res.ok) {
                 setRequests(data.requests);
@@ -36,9 +35,8 @@ export default function WalletRequestsPage() {
         setActionLoading(requestId);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/api/wallet-requests/admin/${action}/${requestId}`, {
+            const res = await authFetch(`${apiUrl}/api/wallet-requests/admin/${action}/${requestId}`, {
                 method: "PUT",
-                credentials: "include",
             });
             if (res.ok) {
                 fetchRequests();

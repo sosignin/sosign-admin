@@ -1,6 +1,5 @@
-"use client";
-
 import { useState, useEffect, useMemo } from "react";
+import { authFetch } from "../../../utils/api";
 
 export default function PlanManagement() {
     const [activeTab, setActiveTab] = useState("users"); // "users" or "plans"
@@ -52,9 +51,7 @@ export default function PlanManagement() {
     const fetchUsers = async () => {
         try {
             setLoadingUsers(true);
-            const response = await fetch(`${apiUrl}/api/admin/customers`, {
-                credentials: "include",
-            });
+            const response = await authFetch(`${apiUrl}/api/admin/customers`);
             const data = await response.json();
             if (Array.isArray(data)) {
                 setUsers(data);
@@ -73,9 +70,7 @@ export default function PlanManagement() {
     const fetchPlans = async () => {
         try {
             setLoadingPlans(true);
-            const response = await fetch(`${apiUrl}/api/admin/plans`, {
-                credentials: "include",
-            });
+            const response = await authFetch(`${apiUrl}/api/admin/plans`);
             const data = await response.json();
             if (Array.isArray(data)) {
                 setPlans(data);
@@ -109,7 +104,7 @@ export default function PlanManagement() {
 
         setSavingUser(true);
         try {
-            const response = await fetch(`${apiUrl}/api/admin/customers/${editingUser._id}/plan`, {
+            const response = await authFetch(`${apiUrl}/api/admin/customers/${editingUser._id}/plan`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -119,7 +114,6 @@ export default function PlanManagement() {
                     freeChecksRemaining: parseInt(freeChecksInput),
                     points: parseFloat(pointsInput),
                 }),
-                credentials: "include",
             });
 
             const data = await response.json();
@@ -228,13 +222,12 @@ export default function PlanManagement() {
                 : `${apiUrl}/api/admin/plans/${editingPlan._id}`;
             const method = isAddingPlan ? "POST" : "PUT";
 
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: method,
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(planPayload),
-                credentials: "include",
             });
 
             const data = await response.json();
@@ -266,9 +259,10 @@ export default function PlanManagement() {
         }
 
         try {
-            const response = await fetch(`${apiUrl}/api/admin/plans/${plan._id}`, {
+            const response = await authFetch(`${apiUrl}/api/admin/plans/${plan._id}`, {
                 method: "DELETE",
-                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ _action: "delete" }),
             });
 
             const data = await response.json();

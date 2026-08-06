@@ -1,8 +1,7 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { authFetch } from "@/utils/api";
 
 export default function EditNewsletterPage() {
   const router = useRouter();
@@ -126,13 +125,9 @@ export default function EditNewsletterPage() {
         body.append("coverImage", formData.coverImage);
       }
 
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const res = await fetch(`${apiUrl}/api/newsletters/${id}`, {
+      const res = await authFetch(`${apiUrl}/api/newsletters/${id}`, {
         method: "PUT",
-        headers,
         body,
-        credentials: "include",
       });
 
       if (!res.ok) {

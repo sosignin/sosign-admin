@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "../../utils/api";
 
 export default function PetitionsPage() {
   const router = useRouter();
@@ -34,12 +35,9 @@ export default function PetitionsPage() {
         ...(country && { country: country }),
       });
 
-      const response = await fetch(
+      const response = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/admin/petitions?${queryParams}`,
-        {
-          credentials: "include", // Include admin cookies
-        }
+        }/api/admin/petitions?${queryParams}`
       );
 
       if (!response.ok) {
@@ -66,12 +64,11 @@ export default function PetitionsPage() {
 
     try {
       setDeleteLoading(petitionId);
-      const response = await fetch(
+      const response = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
         }/api/admin/petitions/${petitionId}`,
         {
           method: "DELETE",
-          credentials: "include", // Include admin cookies
         }
       );
 
@@ -94,12 +91,11 @@ export default function PetitionsPage() {
   const handleToggleBanner = async (e, petitionId, currentStatus) => {
     e.stopPropagation();
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${petitionId}/banner-feature`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ isFeaturedInBanner: !currentStatus }),
         }
       );
@@ -141,12 +137,11 @@ export default function PetitionsPage() {
     setSlugModalSuccess("");
 
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${editingSlugPetition._id}/slug`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ slug: slugInputValue }),
         }
       );
@@ -170,12 +165,11 @@ export default function PetitionsPage() {
   const handleToggleSchoolStallMap = async (e, petitionId, currentStatus) => {
     e.stopPropagation();
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${petitionId}/school-stall-map`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ showSchoolStallMap: !currentStatus }),
         }
       );

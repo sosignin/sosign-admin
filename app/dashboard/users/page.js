@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getAuthHeaders } from "@/utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
@@ -29,26 +29,16 @@ export default function UserManagement() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const headers = getAuthHeaders();
                 // Fetch all users
-                const usersRes = await fetch(`${apiUrl}/api/admin/customers`, {
-                    headers,
-                    credentials: "include",
-                });
+                const usersRes = await authFetch(`${apiUrl}/api/admin/customers`);
                 const usersData = await usersRes.json();
 
                 // Fetch stats for total user count
-                const statsRes = await fetch(`${apiUrl}/api/admin/stats`, {
-                    headers,
-                    credentials: "include",
-                });
+                const statsRes = await authFetch(`${apiUrl}/api/admin/stats`);
                 const statsData = await statsRes.json();
 
                 // Fetch verified users
-                const verifiedRes = await fetch(`${apiUrl}/api/admin/verified-users`, {
-                    headers,
-                    credentials: "include",
-                });
+                const verifiedRes = await authFetch(`${apiUrl}/api/admin/verified-users`);
                 const verifiedData = await verifiedRes.json();
 
                 if (Array.isArray(usersData)) {
@@ -88,13 +78,12 @@ export default function UserManagement() {
         if (!confirm(`Are you sure you want to ${currentStatus ? "unsuspend" : "suspend"} this user?`)) return;
 
         try {
-            const response = await fetch(`${apiUrl}/api/admin/customers/${userId}/suspend`, {
+            const response = await authFetch(`${apiUrl}/api/admin/customers/${userId}/suspend`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ isSuspended: !currentStatus }),
-                credentials: "include",
             });
 
             const data = await response.json();
@@ -138,13 +127,12 @@ export default function UserManagement() {
         }
         try {
             setNameLoading(true);
-            const response = await fetch(`${apiUrl}/api/admin/customers/${nameModal}/name`, {
+            const response = await authFetch(`${apiUrl}/api/admin/customers/${nameModal}/name`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ name: nameInput }),
-                credentials: "include",
             });
 
             const data = await response.json();
@@ -170,13 +158,12 @@ export default function UserManagement() {
     const handleUpdateMobile = async () => {
         try {
             setMobileLoading(true);
-            const response = await fetch(`${apiUrl}/api/admin/customers/${mobileModal}/mobile`, {
+            const response = await authFetch(`${apiUrl}/api/admin/customers/${mobileModal}/mobile`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ mobileNumber: mobileInput }),
-                credentials: "include",
             });
 
             const data = await response.json();
@@ -203,13 +190,12 @@ export default function UserManagement() {
         if (!confirm("Are you sure you want to reset (remove) this user's mobile number?")) return;
         try {
             setMobileLoading(true);
-            const response = await fetch(`${apiUrl}/api/admin/customers/${mobileModal}/mobile`, {
+            const response = await authFetch(`${apiUrl}/api/admin/customers/${mobileModal}/mobile`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ mobileNumber: "" }),
-                credentials: "include",
             });
 
             const data = await response.json();
@@ -239,12 +225,11 @@ export default function UserManagement() {
 
     const handleLoginAs = async (user) => {
         try {
-            const response = await fetch(`${apiUrl}/api/admin/customers/${user._id}/login-as`, {
+            const response = await authFetch(`${apiUrl}/api/admin/customers/${user._id}/login-as`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                credentials: "include",
             });
 
             const data = await response.json();

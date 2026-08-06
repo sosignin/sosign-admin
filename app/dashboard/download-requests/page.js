@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "../../../utils/api";
 
 export default function DownloadRequestsPage() {
     const [requests, setRequests] = useState([]);
@@ -20,9 +21,8 @@ export default function DownloadRequestsPage() {
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const response = await fetch(
-                `${apiUrl}/api/download-requests/admin/all?status=${filter}`,
-                { credentials: "include" }
+            const response = await authFetch(
+                `${apiUrl}/api/download-requests/admin/all?status=${filter}`
             );
 
             if (response.ok) {
@@ -40,9 +40,9 @@ export default function DownloadRequestsPage() {
     const fetchStats = async () => {
         try {
             const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
-                fetch(`${apiUrl}/api/download-requests/admin/all?status=pending`, { credentials: "include" }),
-                fetch(`${apiUrl}/api/download-requests/admin/all?status=approved`, { credentials: "include" }),
-                fetch(`${apiUrl}/api/download-requests/admin/all?status=rejected`, { credentials: "include" }),
+                authFetch(`${apiUrl}/api/download-requests/admin/all?status=pending`),
+                authFetch(`${apiUrl}/api/download-requests/admin/all?status=approved`),
+                authFetch(`${apiUrl}/api/download-requests/admin/all?status=rejected`),
             ]);
 
             const pendingData = await pendingRes.json();
@@ -69,11 +69,10 @@ export default function DownloadRequestsPage() {
     const handleApprove = async (requestId, note = "", fields = []) => {
         setProcessingId(requestId);
         try {
-            const response = await fetch(
+            const response = await authFetch(
                 `${apiUrl}/api/download-requests/admin/${requestId}/approve`,
                 {
                     method: "PUT",
-                    credentials: "include",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ adminNote: note, approvedFields: fields }),
                 }
@@ -97,11 +96,10 @@ export default function DownloadRequestsPage() {
     const handleReject = async (requestId, note = "") => {
         setProcessingId(requestId);
         try {
-            const response = await fetch(
+            const response = await authFetch(
                 `${apiUrl}/api/download-requests/admin/${requestId}/reject`,
                 {
                     method: "PUT",
-                    credentials: "include",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ adminNote: note }),
                 }

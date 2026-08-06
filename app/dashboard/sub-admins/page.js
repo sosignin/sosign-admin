@@ -1,7 +1,6 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "../../utils/api";
 
 const ALL_PERMISSIONS = [
     { key: "dashboard", label: "Dashboard", icon: "fas fa-home", color: "blue" },
@@ -70,9 +69,7 @@ export default function SubAdminManagement() {
     const fetchSubAdmins = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${apiUrl}/api/subadmin/all`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${apiUrl}/api/subadmin/all`);
             if (res.status === 403) {
                 router.push("/dashboard");
                 return;
@@ -94,10 +91,9 @@ export default function SubAdminManagement() {
         setError("");
 
         try {
-            const res = await fetch(`${apiUrl}/api/subadmin/create`, {
+            const res = await authFetch(`${apiUrl}/api/subadmin/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include",
                 body: JSON.stringify(formData),
             });
             const data = await res.json();
@@ -122,10 +118,9 @@ export default function SubAdminManagement() {
         setError("");
 
         try {
-            const res = await fetch(`${apiUrl}/api/subadmin/${selectedSubAdmin._id}`, {
+            const res = await authFetch(`${apiUrl}/api/subadmin/${selectedSubAdmin._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include",
                 body: JSON.stringify({
                     name: formData.name,
                     email: formData.email,
@@ -148,10 +143,9 @@ export default function SubAdminManagement() {
 
     const handleToggleActive = async (subAdmin) => {
         try {
-            const res = await fetch(`${apiUrl}/api/subadmin/${subAdmin._id}`, {
+            const res = await authFetch(`${apiUrl}/api/subadmin/${subAdmin._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include",
                 body: JSON.stringify({ isActive: !subAdmin.isActive }),
             });
             if (!res.ok) throw new Error("Failed to update status");
@@ -169,10 +163,9 @@ export default function SubAdminManagement() {
         setError("");
 
         try {
-            const res = await fetch(`${apiUrl}/api/subadmin/${selectedSubAdmin._id}/reset-password`, {
+            const res = await authFetch(`${apiUrl}/api/subadmin/${selectedSubAdmin._id}/reset-password`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include",
                 body: JSON.stringify({ newPassword }),
             });
             const data = await res.json();
@@ -195,9 +188,10 @@ export default function SubAdminManagement() {
         setError("");
 
         try {
-            const res = await fetch(`${apiUrl}/api/subadmin/${selectedSubAdmin._id}`, {
+            const res = await authFetch(`${apiUrl}/api/subadmin/${selectedSubAdmin._id}`, {
                 method: "DELETE",
-                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ _action: "delete" }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Failed to delete sub-admin");

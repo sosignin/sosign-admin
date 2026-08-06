@@ -1,9 +1,8 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import RichBlogEditor from "@/components/RichBlogEditor";
+import { authFetch } from "@/utils/api";
 
 export default function EditBlogPage() {
     const router = useRouter();
@@ -59,9 +58,7 @@ export default function EditBlogPage() {
         const fetchBlog = async () => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                const res = await fetch(`${apiUrl}/api/blogs/admin/${blogId}`, {
-                    credentials: "include",
-                });
+                const res = await authFetch(`${apiUrl}/api/blogs/admin/${blogId}`);
 
                 if (!res.ok) throw new Error("Failed to fetch blog");
 
@@ -197,9 +194,8 @@ export default function EditBlogPage() {
                 formDataToSend.append("image", imageFile);
             }
 
-            const res = await fetch(`${apiUrl}/api/blogs/${blogId}`, {
+            const res = await authFetch(`${apiUrl}/api/blogs/${blogId}`, {
                 method: "PUT",
-                credentials: "include",
                 body: formDataToSend,
             });
 

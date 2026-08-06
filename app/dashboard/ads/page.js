@@ -1,6 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
+import { authFetch } from "../../utils/api";
 
 export default function AdsManagementPage() {
     const [ads, setAds] = useState([]);
@@ -28,9 +27,7 @@ export default function AdsManagementPage() {
     const fetchAds = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_URL}/api/ads`, {
-                credentials: "include",
-            });
+            const res = await authFetch(`${API_URL}/api/ads`);
             const data = await res.json();
             if (data.success) {
                 setAds(data.ads);
@@ -125,9 +122,8 @@ export default function AdsManagementPage() {
 
             const method = editingAd ? "PUT" : "POST";
 
-            const res = await fetch(url, {
+            const res = await authFetch(url, {
                 method,
-                credentials: "include",
                 body: formDataToSend,
             });
 
@@ -153,9 +149,10 @@ export default function AdsManagementPage() {
         if (!confirm("Are you sure you want to delete this ad?")) return;
 
         try {
-            const res = await fetch(`${API_URL}/api/ads/${id}`, {
+            const res = await authFetch(`${API_URL}/api/ads/${id}`, {
                 method: "DELETE",
-                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ _action: "delete" }),
             });
 
             const data = await res.json();
@@ -174,9 +171,8 @@ export default function AdsManagementPage() {
     // Handle toggle status
     const handleToggleStatus = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/api/ads/${id}/toggle`, {
-                method: "PATCH",
-                credentials: "include",
+            const res = await authFetch(`${API_URL}/api/ads/${id}/toggle`, {
+                method: "POST",
             });
 
             const data = await res.json();
