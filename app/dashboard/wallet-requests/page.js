@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { authFetch } from "../../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function WalletRequestsPage() {
     const [requests, setRequests] = useState([]);

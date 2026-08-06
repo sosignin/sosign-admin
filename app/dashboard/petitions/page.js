@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authFetch } from "../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function PetitionsPage() {
   const router = useRouter();

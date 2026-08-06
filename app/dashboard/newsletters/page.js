@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { authFetch } from "../../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function NewsletterManagementPage() {
   const [activeTab, setActiveTab] = useState("issues"); // "issues" or "subscribers"

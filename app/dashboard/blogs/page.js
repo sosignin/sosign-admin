@@ -1,6 +1,8 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { authFetch } from "../../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function BlogManagementPage() {
     const [blogs, setBlogs] = useState([]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { authFetch } from "../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function RejectedPetitionsPage() {
   const [petitions, setPetitions] = useState([]);

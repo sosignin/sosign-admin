@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { authFetch } from "../../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function CategoryManagement() {
     const [categories, setCategories] = useState([]);

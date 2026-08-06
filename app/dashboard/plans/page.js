@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect, useMemo } from "react";
-import { authFetch } from "../../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function PlanManagement() {
     const [activeTab, setActiveTab] = useState("users"); // "users" or "plans"

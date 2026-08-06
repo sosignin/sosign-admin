@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { authFetch } from "../../utils/api";
+import { authFetch } from "@/utils/api";
 
 export default function AdsManagementPage() {
     const [ads, setAds] = useState([]);

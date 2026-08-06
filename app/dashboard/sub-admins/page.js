@@ -1,6 +1,8 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authFetch } from "../../utils/api";
+import { authFetch } from "@/utils/api";
 
 const ALL_PERMISSIONS = [
     { key: "dashboard", label: "Dashboard", icon: "fas fa-home", color: "blue" },

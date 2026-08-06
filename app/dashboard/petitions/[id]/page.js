@@ -1,8 +1,10 @@
+"use client";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import AdminCommentsSection from "../../../../components/AdminCommentsSection";
-import { authFetch } from "../../../../utils/api";
+import { authFetch } from "@/utils/api";
 
 const LANGUAGES = [
   { code: "default", name: "Original (Default)", native: "Original Text" },
