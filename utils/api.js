@@ -8,9 +8,17 @@ export const getAuthHeaders = (extraHeaders = {}) => {
 };
 
 export const authFetch = (url, options = {}) => {
-  const headers = getAuthHeaders(options.headers || {});
+  const originalMethod = (options.method || "GET").toUpperCase();
+  const isPutOrDelete = originalMethod === "PUT" || originalMethod === "DELETE";
+
+  const headers = getAuthHeaders({
+    ...(options.headers || {}),
+    ...(isPutOrDelete ? { "X-HTTP-Method-Override": originalMethod } : {}),
+  });
+
   return fetch(url, {
     ...options,
+    method: isPutOrDelete ? "POST" : originalMethod,
     headers,
     credentials: "include",
   });

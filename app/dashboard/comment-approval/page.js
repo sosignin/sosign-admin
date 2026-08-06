@@ -33,7 +33,7 @@ export default function CommentApprovalPage() {
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
                 }/api/comments/admin/${id}/approve`,
                 {
-                    method: "PUT",
+                    method: "POST",
                 }
             );
             if (res.ok) {
@@ -56,7 +56,7 @@ export default function CommentApprovalPage() {
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
                 }/api/comments/admin/${id}/reject`,
                 {
-                    method: "DELETE",
+                    method: "POST",
                 }
             );
             if (res.ok) {

@@ -75,8 +75,12 @@ export default function FAQManagementPage() {
 
     try {
       const res = await fetch(`${apiUrl}/api/faqs/${id}`, {
-        method: "DELETE",
-        headers: getHeaders(),
+        method: "POST",
+        headers: {
+          ...getHeaders(),
+          "X-HTTP-Method-Override": "DELETE",
+        },
+        body: JSON.stringify({ _action: "delete" }),
         credentials: "include",
       });
 
@@ -107,11 +111,12 @@ export default function FAQManagementPage() {
       };
 
       const url = editingId ? `${apiUrl}/api/faqs/${editingId}` : `${apiUrl}/api/faqs`;
-      const method = editingId ? "PUT" : "POST";
+      const method = "POST";
+      const headers = editingId ? { ...getHeaders(), "X-HTTP-Method-Override": "PUT" } : getHeaders();
 
       const res = await fetch(url, {
         method,
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify(payload),
         credentials: "include",
       });
