@@ -24,6 +24,9 @@ export default function EditBlogPage() {
         isSlugEdited: true,
         content: "",
         excerpt: "",
+        metaTitle: "",
+        metaDescription: "",
+        metaKeywords: "",
         author: "",
         category: "General",
         tags: "",
@@ -82,6 +85,9 @@ export default function EditBlogPage() {
                     isSlugEdited: true,
                     content: blog.content || "",
                     excerpt: blog.excerpt || "",
+                    metaTitle: blog.metaTitle || "",
+                    metaDescription: blog.metaDescription || "",
+                    metaKeywords: blog.metaKeywords || "",
                     author: blog.author || "",
                     category: blog.category || "General",
                     tags: blog.tags?.join(", ") || "",
@@ -187,6 +193,9 @@ export default function EditBlogPage() {
             formDataToSend.append("slug", formData.slug);
             formDataToSend.append("content", formData.content);
             formDataToSend.append("excerpt", formData.excerpt);
+            formDataToSend.append("metaTitle", formData.metaTitle);
+            formDataToSend.append("metaDescription", formData.metaDescription);
+            formDataToSend.append("metaKeywords", formData.metaKeywords);
             formDataToSend.append("author", formData.author);
             formDataToSend.append("category", formData.category);
             formDataToSend.append("tags", formData.tags);
@@ -494,6 +503,83 @@ export default function EditBlogPage() {
                                 placeholder="community, design, news..."
                                 className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
                             />
+                        </div>
+                    </div>
+
+                    {/* SEO Meta Tags Card */}
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-4">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                <i className="fas fa-search text-cyan-600"></i>
+                                SEO Meta Tags
+                            </h3>
+                            <span className="text-[10px] font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">
+                                Search Engines
+                            </span>
+                        </div>
+
+                        {/* Meta Title */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-semibold text-gray-700">
+                                    Meta Title
+                                </label>
+                                <span className={`text-[11px] font-mono ${formData.metaTitle.length > 60 ? 'text-amber-500 font-bold' : 'text-gray-400'}`}>
+                                    {formData.metaTitle.length}/60
+                                </span>
+                            </div>
+                            <input
+                                type="text"
+                                name="metaTitle"
+                                value={formData.metaTitle}
+                                onChange={handleChange}
+                                placeholder="Custom SEO Page Title (50-60 chars)..."
+                                className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
+                            />
+                            <p className="text-[11px] text-gray-400 mt-1">
+                                Appears in Google search results & browser tabs.
+                            </p>
+                        </div>
+
+                        {/* Meta Description */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-semibold text-gray-700">
+                                    Meta Description
+                                </label>
+                                <span className={`text-[11px] font-mono ${formData.metaDescription.length > 160 ? 'text-amber-500 font-bold' : 'text-gray-400'}`}>
+                                    {formData.metaDescription.length}/160
+                                </span>
+                            </div>
+                            <textarea
+                                name="metaDescription"
+                                value={formData.metaDescription}
+                                onChange={handleChange}
+                                rows={3}
+                                placeholder="Search engine snippet summary (150-160 chars)..."
+                                className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all resize-none leading-relaxed"
+                            />
+                            <p className="text-[11px] text-gray-400 mt-1">
+                                Displayed below the title in search engine result pages.
+                            </p>
+                        </div>
+
+                        {/* Meta Keywords */}
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                Meta Keywords (comma-separated)
+                            </label>
+                            <input
+                                type="text"
+                                name="metaKeywords"
+                                value={formData.metaKeywords}
+                                onChange={handleChange}
+                                placeholder="e.g. paper leaks, exam scams, student rights..."
+                                className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
+                            />
+                            <p className="text-[11px] text-gray-400 mt-1">
+                                Meta keywords tag for indexing engines and topic classification.
+                            </p>
                         </div>
                     </div>
 
