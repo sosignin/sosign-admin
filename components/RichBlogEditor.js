@@ -54,6 +54,153 @@ export default function RichBlogEditor({ value, onChange, title, author, categor
         }
     };
 
+    // Smart Paste Handler: Preserves exact paragraph structure, headings, lists, formatting & line breaks
+    const handlePaste = (e) => {
+        e.preventDefault();
+
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const pastedHtml = clipboardData.getData("text/html");
+        const pastedText = clipboardData.getData("text/plain");
+
+        let finalHtml = "";
+
+        if (pastedHtml && pastedHtml.trim().length > 0) {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(pastedHtml, "text/html");
+
+                // Remove scripts, styles, meta, xml tags
+                const elementsToRemove = doc.querySelectorAll("script, style, meta, link, xml, object, embed");
+                elementsToRemove.forEach((el) => el.remove());
+
+                // Remove MS Word comments
+                const iterator = doc.createNodeIterator(doc.body, NodeFilter.SHOW_COMMENT);
+                let commentNode;
+                while ((commentNode = iterator.nextNode())) {
+                    if (commentNode.parentNode) {
+                        commentNode.parentNode.removeChild(commentNode);
+                    }
+                }
+
+                // Clean attributes & styles from MS Word/Office while preserving semantics
+                const body = doc.body;
+
+                // Ensure top-level block structure: wrap orphan text or inline elements into <p> tags
+                const newNodes = [];
+                let currentP = null;
+
+                Array.from(body.childNodes).forEach((node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.textContent;
+                        if (text && text.trim().length > 0) {
+                            if (!currentP) {
+                                currentP = doc.createElement("p");
+                                newNodes.push(currentP);
+                            }
+                            currentP.appendChild(node.cloneNode(true));
+                        }
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tag = node.tagName.toLowerCase();
+                        const isBlock = [
+                            "p",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                            "ul",
+                            "ol",
+                            "li",
+                            "blockquote",
+                            "pre",
+                            "table",
+                            "div",
+                            "hr",
+                        ].includes(tag);
+
+                        if (isBlock) {
+                            currentP = null;
+                            if (tag === "div") {
+                                // Convert <div> to <p> if it only contains text/inline elements
+                                const hasBlockChild = Array.from(node.children).some((child) =>
+                                    [
+                                        "p",
+                                        "h1",
+                                        "h2",
+                                        "h3",
+                                        "h4",
+                                        "h5",
+                                        "h6",
+                                        "ul",
+                                        "ol",
+                                        "div",
+                                        "blockquote",
+                                    ].includes(child.tagName.toLowerCase())
+                                );
+                                if (!hasBlockChild) {
+                                    const p = doc.createElement("p");
+                                    p.innerHTML = node.innerHTML;
+                                    newNodes.push(p);
+                                } else {
+                                    newNodes.push(node.cloneNode(true));
+                                }
+                            } else {
+                                newNodes.push(node.cloneNode(true));
+                            }
+                        } else {
+                            if (!currentP) {
+                                currentP = doc.createElement("p");
+                                newNodes.push(currentP);
+                            }
+                            currentP.appendChild(node.cloneNode(true));
+                        }
+                    }
+                });
+
+                if (newNodes.length > 0) {
+                    body.innerHTML = "";
+                    newNodes.forEach((n) => body.appendChild(n));
+                }
+
+                finalHtml = body.innerHTML;
+            } catch (err) {
+                console.error("Error parsing pasted HTML:", err);
+            }
+        }
+
+        // Fallback to plain text with preserved paragraph breaks (\n\n or \n)
+        if (!finalHtml || finalHtml.trim().length === 0) {
+            if (pastedText) {
+                const blocks = pastedText
+                    .split(/\r?\n\r?\n/)
+                    .map((block) => block.trim())
+                    .filter((block) => block.length > 0);
+
+                if (blocks.length > 0) {
+                    finalHtml = blocks
+                        .map((block) => {
+                            const lines = block
+                                .split(/\r?\n/)
+                                .map((l) => l.trim())
+                                .filter((l) => l.length > 0);
+                            return `<p>${lines.join("<br>")}</p>`;
+                        })
+                        .join("");
+                } else {
+                    finalHtml = `<p>${pastedText.replace(/\r?\n/g, "<br>")}</p>`;
+                }
+            }
+        }
+
+        if (finalHtml) {
+            document.execCommand("insertHTML", false, finalHtml);
+            handleInput();
+        }
+    };
+
     // Called when editing raw HTML in HTML tab
     const handleHtmlChange = (e) => {
         const newContent = e.target.value;
@@ -604,6 +751,7 @@ export default function RichBlogEditor({ value, onChange, title, author, categor
                         ref={editorRef}
                         contentEditable
                         onInput={handleInput}
+                        onPaste={handlePaste}
                         className="rich-editor-content p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all bg-white"
                         data-placeholder="Start typing or formatting your blog post content here..."
                     />
