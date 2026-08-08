@@ -655,9 +655,10 @@ export default function PetitionDetailPage() {
                     Problem Statement
                   </label>
                   <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <p className="text-gray-900 whitespace-pre-wrap leading-relaxed">
-                      {petition.petitionDetails.problem}
-                    </p>
+                    <div
+                      className="prose max-w-none text-gray-900 leading-relaxed font-medium"
+                      dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.problem || "<p className='text-gray-400 italic'>No problem statement provided.</p>" }}
+                    />
                   </div>
                 </div>
                 <div>
@@ -666,9 +667,10 @@ export default function PetitionDetailPage() {
                     Proposed Solution
                   </label>
                   <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                    <p className="text-gray-900 whitespace-pre-wrap leading-relaxed">
-                      {petition.petitionDetails.solution}
-                    </p>
+                    <div
+                      className="prose max-w-none text-gray-900 leading-relaxed font-medium"
+                      dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.solution || "<p className='text-gray-400 italic'>No proposed solution provided.</p>" }}
+                    />
                   </div>
                 </div>
                 {petition.petitionDetails.image && (

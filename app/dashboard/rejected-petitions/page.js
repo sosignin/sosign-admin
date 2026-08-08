@@ -145,13 +145,19 @@ export default function RejectedPetitionsPage() {
                         <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                           <i className="fas fa-exclamation-circle"></i> Problem
                         </label>
-                        <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{petition.petitionDetails?.problem}</p>
+                        <div
+                          className="prose max-w-none text-sm text-gray-700 leading-relaxed line-clamp-4 font-medium"
+                          dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.problem || "<p className='text-gray-400 italic'>No problem statement provided.</p>" }}
+                        />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                           <i className="fas fa-info-circle"></i> Solution
                         </label>
-                        <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{petition.petitionDetails?.solution}</p>
+                        <div
+                          className="prose max-w-none text-sm text-gray-700 leading-relaxed line-clamp-4 font-medium"
+                          dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.solution || "<p className='text-gray-400 italic'>No proposed solution provided.</p>" }}
+                        />
                       </div>
                     </div>
                   </div>

@@ -446,9 +446,10 @@ export default function PetitionApprovalPage() {
                             The Problem
                           </label>
                           <div className="p-4 bg-red-50/50 rounded-xl border border-red-100 min-h-[100px]">
-                            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                              {petition.petitionDetails?.problem}
-                            </p>
+                            <div
+                              className="prose max-w-none text-sm text-gray-800 leading-relaxed font-medium"
+                              dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.problem || "<p className='text-gray-400 italic'>No problem statement provided.</p>" }}
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
@@ -457,9 +458,10 @@ export default function PetitionApprovalPage() {
                             The Solution
                           </label>
                           <div className="p-4 bg-green-50/50 rounded-xl border border-green-100 min-h-[100px]">
-                            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                              {petition.petitionDetails?.solution}
-                            </p>
+                            <div
+                              className="prose max-w-none text-sm text-gray-800 leading-relaxed font-medium"
+                              dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.solution || "<p className='text-gray-400 italic'>No proposed solution provided.</p>" }}
+                            />
                           </div>
                         </div>
                       </div>
