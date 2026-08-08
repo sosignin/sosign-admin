@@ -120,6 +120,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "petitions",
         },
         {
+            name: "Signature Claims ✍️",
+            href: "/dashboard/requested-signature-claims",
+            icon: "fas fa-file-signature",
+            color: "from-blue-600 to-indigo-700",
+            permissionKey: "petitions",
+        },
+        {
             name: "Successful Petitions",
             href: "/dashboard/successfulpetitions",
             icon: "fas fa-trophy",
