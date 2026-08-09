@@ -257,6 +257,84 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Website Traffic & Visitors Analytics Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <i className="fas fa-chart-line text-indigo-600"></i>
+              Website Visitors & Traffic
+            </h2>
+            <p className="text-xs font-medium text-gray-500">Real-time visitor counts and total pageview analytics</p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Live Tracking Active
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Total Pageviews */}
+          <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mr-4 -mt-4 w-16 h-16 bg-white/10 rounded-full blur-sm"></div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-indigo-100 uppercase tracking-wider">Total Pageviews</span>
+              <i className="fas fa-eye text-indigo-200 text-lg"></i>
+            </div>
+            <p className="text-3xl font-extrabold">{formatNumber(stats?.traffic?.totalPageViews || 0)}</p>
+            <p className="text-[11px] text-indigo-200 mt-1">All-time site pageviews</p>
+          </div>
+
+          {/* Today's Unique Visitors */}
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today&apos;s Visitors</span>
+              <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+                <i className="fas fa-user-clock text-sm"></i>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{formatNumber(stats?.traffic?.todayUniqueVisitors || 0)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Unique IPs today</p>
+          </div>
+
+          {/* Today's Pageviews */}
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today&apos;s Views</span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <i className="fas fa-mouse-pointer text-sm"></i>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{formatNumber(stats?.traffic?.todayPageViews || 0)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Pageviews logged today</p>
+          </div>
+
+          {/* This Month's Unique Visitors */}
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">This Month</span>
+              <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <i className="fas fa-calendar-alt text-sm"></i>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{formatNumber(stats?.traffic?.monthUniqueVisitors || 0)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Unique visitors this month</p>
+          </div>
+
+          {/* Total Unique Visitors */}
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">All-Time Visitors</span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <i className="fas fa-users text-sm"></i>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{formatNumber(stats?.traffic?.totalUniqueVisitors || 0)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Total distinct visitors</p>
+          </div>
+        </div>
+      </div>
+
       {/* Main Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Total Petitions */}
