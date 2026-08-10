@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -331,6 +332,120 @@ export default function Dashboard() {
             </div>
             <p className="text-2xl font-bold text-gray-900">{formatNumber(stats?.traffic?.totalUniqueVisitors || 0)}</p>
             <p className="text-[11px] text-gray-400 mt-1">Total distinct visitors</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Petition & Blog Visitors Analytics Section */}
+      <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Total Content Views Summary Card */}
+        <div className="lg:col-span-1 bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-xl flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <i className="fas fa-fire text-amber-400"></i>
+                Content Engagement
+              </h3>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-white/10 text-indigo-200">
+                Live Views
+              </span>
+            </div>
+
+            <div className="space-y-4 my-4">
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Petition Views</p>
+                  <p className="text-2xl font-black text-blue-400">{formatNumber(stats?.contentViews?.totalPetitionViews || 0)}</p>
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                  <i className="fas fa-file-signature text-lg"></i>
+                </div>
+              </div>
+
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Blog Views</p>
+                  <p className="text-2xl font-black text-emerald-400">{formatNumber(stats?.contentViews?.totalBlogViews || 0)}</p>
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <i className="fas fa-blog text-lg"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+            <span>Total Content Impressions</span>
+            <span className="font-bold text-white text-sm">{formatNumber(stats?.contentViews?.totalCombinedViews || 0)}</span>
+          </div>
+        </div>
+
+        {/* Top Viewed Petitions List */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <i className="fas fa-trophy text-amber-500"></i>
+                Most Viewed Petitions
+              </h3>
+              <Link href="/dashboard/petitions" className="text-xs text-blue-600 font-semibold hover:underline">View All</Link>
+            </div>
+
+            <div className="space-y-3">
+              {stats?.contentViews?.topPetitions?.length > 0 ? (
+                stats.contentViews.topPetitions.map((pet, idx) => (
+                  <div key={pet._id || idx} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
+                    <div className="flex items-center gap-3 overflow-hidden pr-2">
+                      <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      <p className="text-xs font-medium text-gray-800 truncate" title={pet.title}>{pet.title}</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-1 rounded-md bg-blue-50 text-blue-700 shrink-0 flex items-center gap-1">
+                      <i className="fas fa-eye text-[10px]"></i>
+                      {formatNumber(pet.views || 0)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 py-4 text-center">No petition view data yet</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Viewed Blogs List */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <i className="fas fa-star text-emerald-500"></i>
+                Most Viewed Blogs
+              </h3>
+              <Link href="/dashboard/blogs" className="text-xs text-blue-600 font-semibold hover:underline">View All</Link>
+            </div>
+
+            <div className="space-y-3">
+              {stats?.contentViews?.topBlogs?.length > 0 ? (
+                stats.contentViews.topBlogs.map((blog, idx) => (
+                  <div key={blog._id || idx} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
+                    <div className="flex items-center gap-3 overflow-hidden pr-2">
+                      <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      <p className="text-xs font-medium text-gray-800 truncate" title={blog.title}>{blog.title}</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 shrink-0 flex items-center gap-1">
+                      <i className="fas fa-eye text-[10px]"></i>
+                      {formatNumber(blog.views || 0)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 py-4 text-center">No blog view data yet</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

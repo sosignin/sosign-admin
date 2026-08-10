@@ -11,7 +11,8 @@ export default function UserManagement() {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
-    const [activeTab, setActiveTab] = useState("all"); // "all" or "verified"
+    const [activeTab, setActiveTab] = useState("all"); // "all" | "genuine" | "verified" | "dummy"
+    const [verifiedSubFilter, setVerifiedSubFilter] = useState("all"); // "all" | "real" | "dummy"
 
     // Mobile management state
     const [mobileModal, setMobileModal] = useState(null); // userId or null
@@ -218,9 +219,25 @@ export default function UserManagement() {
         }
     };
 
-    const isDummyUser = (email) => {
-        if (!email) return false;
-        return email.startsWith("dummy_") || /_[0-9]{4,6}@/.test(email);
+    const isDummyUser = (user) => {
+        if (!user) return false;
+        if (typeof user === "object" && user.isDummy) return true;
+        const email = (typeof user === "string" ? user : user.email || "").toLowerCase();
+        const bio = (typeof user === "object" ? user.bio || "" : "").toLowerCase();
+        const address = (typeof user === "object" ? user.aadhaarKyc?.address || "" : "").toLowerCase();
+        const maskedAadhaar = (typeof user === "object" ? user.aadhaarKyc?.maskedAadhaar || "" : "");
+        const name = (typeof user === "object" ? user.name || "" : "").toLowerCase();
+
+        return (
+            email.startsWith("dummy_") ||
+            /_[0-9]{4,6}@/.test(email) ||
+            email.includes("@example.com") ||
+            email.includes("dummy") ||
+            bio.includes("dummy") ||
+            address.includes("sosign hub") ||
+            maskedAadhaar.startsWith("XXXX-XXXX-") ||
+            name.includes("dummy")
+        );
     };
 
     const handleLoginAs = async (user) => {
@@ -248,9 +265,29 @@ export default function UserManagement() {
         }
     };
 
-    // --- All Users sorting/filtering ---
+    const dummyUsers = useMemo(() => {
+        const allList = [...users, ...verifiedUsers];
+        const map = new Map();
+        allList.forEach((u) => {
+            if (u && u._id && isDummyUser(u)) {
+                map.set(u._id.toString(), u);
+            }
+        });
+        return Array.from(map.values());
+    }, [users, verifiedUsers]);
+
+    const genuineUsers = useMemo(() => {
+        return users.filter((u) => !isDummyUser(u));
+    }, [users]);
+
+    // --- All / Genuine / Dummy Users sorting/filtering ---
     const sortedUsers = useMemo(() => {
-        let items = [...users];
+        let items = activeTab === "dummy"
+            ? [...dummyUsers]
+            : activeTab === "genuine"
+            ? [...genuineUsers]
+            : [...users];
+
         if (searchTerm) {
             items = items.filter(user =>
                 user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -269,11 +306,17 @@ export default function UserManagement() {
             return 0;
         });
         return items;
-    }, [users, searchTerm, sortConfig]);
+    }, [users, dummyUsers, genuineUsers, activeTab, searchTerm, sortConfig]);
 
     // --- Verified Users sorting/filtering ---
     const sortedVerifiedUsers = useMemo(() => {
         let items = [...verifiedUsers];
+        if (verifiedSubFilter === "real") {
+            items = items.filter((u) => !isDummyUser(u));
+        } else if (verifiedSubFilter === "dummy") {
+            items = items.filter((u) => isDummyUser(u));
+        }
+
         if (searchTerm) {
             items = items.filter(user =>
                 user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -361,33 +404,66 @@ export default function UserManagement() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer" onClick={() => setActiveTab("all")}>
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
                         <i className="fas fa-users text-6xl text-indigo-600"></i>
                     </div>
                     <div className="relative z-10 flex flex-col gap-1">
-                        <span className="text-gray-500 text-sm font-medium">Total Registered Users</span>
+                        <span className="text-gray-500 text-xs font-medium">Total Registered Users</span>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-bold text-gray-900">{totalUsers}</span>
-                            <span className="text-emerald-500 text-sm font-bold flex items-center gap-1">
+                            <span className="text-3xl font-extrabold text-gray-900">{totalUsers}</span>
+                            <span className="text-emerald-500 text-xs font-bold flex items-center gap-1">
                                 <i className="fas fa-check-circle text-[10px]"></i>
-                                Active
+                                Total
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer" onClick={() => setActiveTab("genuine")}>
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+                        <i className="fas fa-user-shield text-6xl text-emerald-600"></i>
+                    </div>
+                    <div className="relative z-10 flex flex-col gap-1">
+                        <span className="text-gray-500 text-xs font-medium">Genuine Organic Users</span>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-extrabold text-emerald-900">{genuineUsers.length}</span>
+                            <span className="text-emerald-600 text-xs font-bold flex items-center gap-1">
+                                <i className="fas fa-shield-alt text-[10px]"></i>
+                                Organic Real
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer" onClick={() => setActiveTab("verified")}>
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
                         <i className="fas fa-user-check text-6xl text-teal-600"></i>
                     </div>
                     <div className="relative z-10 flex flex-col gap-1">
-                        <span className="text-gray-500 text-sm font-medium">Verified Users</span>
+                        <span className="text-gray-500 text-xs font-medium">Verified Users (KYC)</span>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-bold text-gray-900">{verifiedUsers.length}</span>
-                            <span className="text-teal-500 text-sm font-bold flex items-center gap-1">
-                                <i className="fas fa-shield-alt text-[10px]"></i>
-                                KYC Done
+                            <span className="text-3xl font-extrabold text-gray-900">{verifiedUsers.length}</span>
+                            <span className="text-teal-500 text-xs font-bold flex items-center gap-1">
+                                <i className="fas fa-certificate text-[10px]"></i>
+                                KYC Verified
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer" onClick={() => setActiveTab("dummy")}>
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+                        <i className="fas fa-robot text-6xl text-purple-600"></i>
+                    </div>
+                    <div className="relative z-10 flex flex-col gap-1">
+                        <span className="text-gray-500 text-xs font-medium">Rapid Creation (Dummy Users)</span>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-extrabold text-purple-900">{dummyUsers.length}</span>
+                            <span className="text-purple-600 text-xs font-bold flex items-center gap-1">
+                                <i className="fas fa-bolt text-[10px]"></i>
+                                Rapid Created
                             </span>
                         </div>
                     </div>
@@ -395,10 +471,10 @@ export default function UserManagement() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl w-fit">
+            <div className="flex flex-wrap items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-fit">
                 <button
                     onClick={() => { setActiveTab("all"); setSearchTerm(""); setSortConfig({ key: "createdAt", direction: "desc" }); }}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
                         activeTab === "all"
                             ? "bg-white text-indigo-700 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
@@ -415,8 +491,26 @@ export default function UserManagement() {
                     </span>
                 </button>
                 <button
+                    onClick={() => { setActiveTab("genuine"); setSearchTerm(""); setSortConfig({ key: "createdAt", direction: "desc" }); }}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
+                        activeTab === "genuine"
+                            ? "bg-white text-emerald-700 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                    <i className="fas fa-user-shield text-xs text-emerald-600"></i>
+                    Genuine Users
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-black ${
+                        activeTab === "genuine"
+                            ? "bg-emerald-100 text-emerald-800 font-extrabold"
+                            : "bg-emerald-100/60 text-emerald-700"
+                    }`}>
+                        {genuineUsers.length}
+                    </span>
+                </button>
+                <button
                     onClick={() => { setActiveTab("verified"); setSearchTerm(""); setSortConfig({ key: "createdAt", direction: "desc" }); }}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
                         activeTab === "verified"
                             ? "bg-white text-teal-700 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
@@ -432,6 +526,24 @@ export default function UserManagement() {
                         {verifiedUsers.length}
                     </span>
                 </button>
+                <button
+                    onClick={() => { setActiveTab("dummy"); setSearchTerm(""); setSortConfig({ key: "createdAt", direction: "desc" }); }}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
+                        activeTab === "dummy"
+                            ? "bg-white text-purple-700 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                    <i className="fas fa-robot text-xs text-purple-600"></i>
+                    Dummy Users (Rapid Creation)
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-black ${
+                        activeTab === "dummy"
+                            ? "bg-purple-100 text-purple-700 font-extrabold"
+                            : "bg-purple-100/60 text-purple-600"
+                    }`}>
+                        {dummyUsers.length}
+                    </span>
+                </button>
             </div>
 
             {/* Main Content Area */}
@@ -443,23 +555,76 @@ export default function UserManagement() {
                         </div>
                         <input
                             type="text"
-                            placeholder={activeTab === "all"
-                                ? "Search by name, email, or mobile..."
-                                : "Search by name, email, Aadhaar, PAN or Voter ID..."
+                            placeholder={
+                                activeTab === "all"
+                                    ? "Search all users by name, email, or mobile..."
+                                    : activeTab === "dummy"
+                                    ? "Search rapid creation dummy users..."
+                                    : "Search by name, email, Aadhaar, PAN or Voter ID..."
                             }
                             className={`block w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 transition-all text-sm outline-none ${
                                 activeTab === "all"
                                     ? "focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    : activeTab === "dummy"
+                                    ? "focus:ring-purple-500/20 focus:border-purple-500"
                                     : "focus:ring-teal-500/20 focus:border-teal-500"
                             }`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <div className="text-xs font-bold text-gray-500">
+                        {activeTab === "dummy" && (
+                            <span className="text-purple-700 flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200">
+                                <i className="fas fa-robot text-purple-600"></i>
+                                Displaying <strong className="text-purple-900 font-extrabold">{sortedUsers.length}</strong> Rapid Creation Dummy Users (Both Verified & Unverified)
+                            </span>
+                        )}
+                        {activeTab === "genuine" && (
+                            <span className="text-emerald-700 flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                                <i className="fas fa-user-shield text-emerald-600"></i>
+                                Displaying <strong className="text-emerald-900 font-extrabold">{sortedUsers.length}</strong> Genuine Organic Users (Excludes Rapid Creation Accounts)
+                            </span>
+                        )}
+                        {activeTab === "all" && (
+                            <span className="text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
+                                Displaying <strong className="text-indigo-900 font-extrabold">{sortedUsers.length}</strong> total users
+                            </span>
+                        )}
+                        {activeTab === "verified" && (
+                            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                                <span className="text-gray-400 font-medium">Filter Verified:</span>
+                                <button
+                                    onClick={() => setVerifiedSubFilter("all")}
+                                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                                        verifiedSubFilter === "all" ? "bg-teal-700 text-white shadow-xs" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                                >
+                                    All Verified ({verifiedUsers.length})
+                                </button>
+                                <button
+                                    onClick={() => setVerifiedSubFilter("real")}
+                                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                                        verifiedSubFilter === "real" ? "bg-emerald-700 text-white shadow-xs" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                                    }`}
+                                >
+                                    🛡️ Real Verified ({verifiedUsers.filter((u) => !isDummyUser(u)).length})
+                                </button>
+                                <button
+                                    onClick={() => setVerifiedSubFilter("dummy")}
+                                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                                        verifiedSubFilter === "dummy" ? "bg-purple-700 text-white shadow-xs" : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                                    }`}
+                                >
+                                    🤖 Rapid Dummy Verified ({verifiedUsers.filter((u) => isDummyUser(u)).length})
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* All Users Table */}
-                {activeTab === "all" && (
+                {/* All Users / Genuine Users / Dummy Users Table */}
+                {(activeTab === "all" || activeTab === "genuine" || activeTab === "dummy") && (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -502,12 +667,12 @@ export default function UserManagement() {
                                                         <i className="fas fa-user text-indigo-600"></i>
                                                     </div>
                                                     <span className="font-bold text-gray-900">{user.name || "Unnamed User"}</span>
-                                                    {isDummyUser(user.email) && (
+                                                    {isDummyUser(user) && (
                                                         <span 
-                                                            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 cursor-help ml-2"
-                                                            title="Dummy Account (Default Password: dummy_password_12345)"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 cursor-help ml-2 shrink-0"
+                                                            title="Rapid Creation Dummy Account (Default Password: dummy_password_12345)"
                                                         >
-                                                            Dummy
+                                                            <i className="fas fa-robot text-[9px]"></i> Rapid Dummy
                                                         </span>
                                                     )}
                                                     <button
@@ -636,12 +801,12 @@ export default function UserManagement() {
                                                     <div className="flex flex-col">
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-bold text-gray-900">{user.name}</span>
-                                                            {isDummyUser(user.email) && (
+                                                            {isDummyUser(user) && (
                                                                 <span 
-                                                                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 cursor-help"
-                                                                    title="Dummy Account (Default Password: dummy_password_12345)"
+                                                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 cursor-help shrink-0"
+                                                                    title="Rapid Creation Dummy Account (Default Password: dummy_password_12345)"
                                                                 >
-                                                                    Dummy
+                                                                    <i className="fas fa-robot text-[9px]"></i> Rapid Dummy
                                                                 </span>
                                                             )}
                                                         </div>
