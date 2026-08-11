@@ -120,6 +120,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "petitions",
         },
         {
+            name: "Stall Disputes 🛡️",
+            href: "/dashboard/stall-disputes",
+            icon: "fas fa-shield-alt",
+            color: "from-amber-500 to-rose-600",
+            permissionKey: "petitions",
+        },
+        {
             name: "Petition Objections 🚩",
             href: "/dashboard/petition-reports",
             icon: "fas fa-flag",
