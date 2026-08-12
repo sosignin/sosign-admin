@@ -190,6 +190,13 @@ export default function DashboardLayout({ children }) {
             permissionKey: "newsletters",
         },
         {
+            name: "Contact Messages 📩",
+            href: "/dashboard/contact-messages",
+            icon: "fas fa-envelope",
+            color: "from-purple-500 to-indigo-600",
+            permissionKey: "newsletters",
+        },
+        {
             name: "FAQ Management",
             href: "/dashboard/faq",
             icon: "fas fa-question-circle",
