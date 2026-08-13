@@ -388,6 +388,12 @@ export default function PetitionApprovalPage() {
                                   {cat}
                                 </span>
                               ))}
+                              {petition.motherPetition && (
+                                <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                  <i className="fas fa-sitemap text-[8px]"></i>
+                                  Sub-Petition
+                                </span>
+                              )}
                               <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-gray-100 text-gray-600 border border-gray-200">
                                 <i className="fas fa-clock text-[8px]"></i>
                                 {new Date(petition.createdAt).toLocaleDateString()}
@@ -427,6 +433,25 @@ export default function PetitionApprovalPage() {
                   <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column: Content & Details */}
                     <div className="lg:col-span-2 space-y-6">
+                      {/* Mother Petition Info Card */}
+                      {petition.motherPetition && (
+                        <div className="p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 rounded-xl border border-indigo-100/80 shadow-sm flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                              <i className="fas fa-sitemap"></i>
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded border border-indigo-200/50">
+                                Linked Mother Petition
+                              </span>
+                              <h4 className="font-bold text-gray-900 text-sm mt-1">
+                                {typeof petition.motherPetition === "object" ? petition.motherPetition.title : petition.motherPetition}
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Image Preview if exists */}
                       {petition.petitionDetails?.image && (
                         <div className="relative h-48 w-full rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
