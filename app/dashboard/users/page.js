@@ -349,7 +349,7 @@ export default function UserManagement() {
             return 0;
         });
         return items;
-    }, [verifiedUsers, searchTerm, sortConfig]);
+    }, [verifiedUsers, verifiedSubFilter, searchTerm, sortConfig]);
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";

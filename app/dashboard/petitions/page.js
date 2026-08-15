@@ -412,7 +412,9 @@ export default function PetitionsPage() {
                         {petition.title}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
-                        {petition.petitionDetails.problem.substring(0, 100)}...
+                        {petition.petitionDetails?.problem
+                          ? petition.petitionDetails.problem.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().substring(0, 100)
+                          : ""}...
                       </p>
                       {petition.requestedSigners?.length > 0 && (
                         <p className="text-xs text-blue-600 font-semibold mt-1 truncate">
