@@ -513,7 +513,7 @@ export default function DashboardLayout({ children }) {
                 </header>
 
                 {/* Page content */}
-                <div className="relative z-10">
+                <div className="relative">
                     {children}
                 </div>
             </main>
