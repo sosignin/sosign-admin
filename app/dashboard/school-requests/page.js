@@ -239,10 +239,11 @@ export default function AdminSchoolRequestsPage() {
                       <td className="p-4">
                         {lat && lng ? (
                           <a
-                            href={`https://www.google.com/maps?q=${lat},${lng}`}
+                            href={`https://www.google.com/maps/search/${encodeURIComponent(`${item.name}, ${item.address || item.city}`)}/@${lat},${lng},17z`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 font-mono font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 hover:border-blue-400 transition-colors"
+                            title={`Open ${item.name} on Google Maps`}
                           >
                             <i className="fas fa-map-marker-alt text-red-500"></i>
                             <span>{lat.toFixed(4)}, {lng.toFixed(4)}</span>
