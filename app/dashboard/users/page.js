@@ -1317,7 +1317,19 @@ export default function UserManagement() {
                                             {/* Profile Photo / Avatar Column */}
                                             <div className="md:col-span-4 flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-gray-200 shadow-xs text-center">
                                                 {kycModalUser.aadhaarKyc?.profileImage ? (
-                                                    <div className="w-28 h-36 rounded-lg overflow-hidden border border-gray-300 shadow-inner bg-gray-100 mb-2">
+                                                    <div
+                                                        className="w-28 h-36 rounded-lg overflow-hidden border border-gray-300 shadow-inner bg-gray-100 mb-2 cursor-pointer group relative"
+                                                        onClick={() => {
+                                                            const imgSrc = kycModalUser.aadhaarKyc.profileImage.startsWith("data:")
+                                                                ? kycModalUser.aadhaarKyc.profileImage
+                                                                : `data:image/jpeg;base64,${kycModalUser.aadhaarKyc.profileImage}`;
+                                                            setPreviewImage({
+                                                                url: imgSrc,
+                                                                title: `Verified Aadhaar Biometric Photo - ${kycModalUser.aadhaarKyc.name || kycModalUser.name}`
+                                                            });
+                                                        }}
+                                                        title="Click to view enlarged biometric photo"
+                                                    >
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={
@@ -1326,8 +1338,11 @@ export default function UserManagement() {
                                                                     : `data:image/jpeg;base64,${kycModalUser.aadhaarKyc.profileImage}`
                                                             }
                                                             alt="Aadhaar Photo"
-                                                            className="w-full h-full object-cover"
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                                                         />
+                                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                                                            <i className="fas fa-search-plus"></i>
+                                                        </div>
                                                     </div>
                                                 ) : (
                                                     <div className="w-28 h-36 rounded-lg bg-gradient-to-b from-blue-50 to-indigo-100 border border-blue-200 flex flex-col items-center justify-center text-blue-600 mb-2">
@@ -1442,131 +1457,6 @@ export default function UserManagement() {
                                                 <span className="text-xs font-bold text-gray-800 mt-0.5 block">
                                                     {kycModalUser.aadhaarKyc?.country || "India"}
                                                 </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Uploaded / Fetched Aadhaar Card Scans & Images Section */}
-                                    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
-                                                    <i className="fas fa-camera"></i>
-                                                </div>
-                                                <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-tight">
-                                                    Aadhaar Card Document Scans & Images
-                                                </h4>
-                                            </div>
-                                            {(kycModalUser.aadhaarKyc?.frontImage || kycModalUser.aadhaarKyc?.backImage) ? (
-                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                                    Original Dual-Side Scans
-                                                </span>
-                                            ) : (
-                                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                                                    Digital Record
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                                            {/* Front Card Image */}
-                                            <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-200 flex flex-col justify-between">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                                                        <i className="fas fa-id-card text-blue-600"></i>
-                                                        Aadhaar Front Side
-                                                    </span>
-                                                    {kycModalUser.aadhaarKyc?.frontImage && (
-                                                        <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                                                            Uploaded Scan
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {kycModalUser.aadhaarKyc?.frontImage ? (
-                                                    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-white shadow-xs">
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
-                                                            src={kycModalUser.aadhaarKyc.frontImage}
-                                                            alt="Aadhaar Front Side"
-                                                            className="w-full h-48 object-contain bg-slate-900/5 p-1 group-hover:scale-105 transition-transform duration-200 cursor-pointer"
-                                                            onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.frontImage, title: "Aadhaar Card - Front Side" })}
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
-                                                            <button
-                                                                onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.frontImage, title: "Aadhaar Card - Front Side" })}
-                                                                className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-gray-100"
-                                                            >
-                                                                <i className="fas fa-search-plus"></i> Enlarge
-                                                            </button>
-                                                            <a
-                                                                href={kycModalUser.aadhaarKyc.frontImage}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                download
-                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-blue-700"
-                                                            >
-                                                                <i className="fas fa-download"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="h-44 rounded-xl border border-dashed border-gray-300 bg-white/60 flex flex-col items-center justify-center text-center p-4 text-gray-400">
-                                                        <i className="fas fa-id-card text-3xl mb-1.5 text-gray-300"></i>
-                                                        <p className="text-xs font-bold text-gray-500">No Front Image Scan</p>
-                                                        <p className="text-[11px] text-gray-400 mt-0.5">Verified via DigiLocker / UIDAI direct XML token</p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Back Card Image */}
-                                            <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-200 flex flex-col justify-between">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                                                        <i className="fas fa-map-marked-alt text-indigo-600"></i>
-                                                        Aadhaar Back Side (Address)
-                                                    </span>
-                                                    {kycModalUser.aadhaarKyc?.backImage && (
-                                                        <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                                                            Uploaded Scan
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {kycModalUser.aadhaarKyc?.backImage ? (
-                                                    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-white shadow-xs">
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
-                                                            src={kycModalUser.aadhaarKyc.backImage}
-                                                            alt="Aadhaar Back Side"
-                                                            className="w-full h-48 object-contain bg-slate-900/5 p-1 group-hover:scale-105 transition-transform duration-200 cursor-pointer"
-                                                            onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.backImage, title: "Aadhaar Card - Back Side" })}
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
-                                                            <button
-                                                                onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.backImage, title: "Aadhaar Card - Back Side" })}
-                                                                className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-gray-100"
-                                                            >
-                                                                <i className="fas fa-search-plus"></i> Enlarge
-                                                            </button>
-                                                            <a
-                                                                href={kycModalUser.aadhaarKyc.backImage}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                download
-                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-blue-700"
-                                                            >
-                                                                <i className="fas fa-download"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="h-44 rounded-xl border border-dashed border-gray-300 bg-white/60 flex flex-col items-center justify-center text-center p-4 text-gray-400">
-                                                        <i className="fas fa-map-marked-alt text-3xl mb-1.5 text-gray-300"></i>
-                                                        <p className="text-xs font-bold text-gray-500">No Back Image Scan</p>
-                                                        <p className="text-[11px] text-gray-400 mt-0.5">Verified via DigiLocker / UIDAI direct XML token</p>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
