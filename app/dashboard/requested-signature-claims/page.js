@@ -209,7 +209,7 @@ export default function AdminRequestedSignatureClaimsPage() {
                 <tr className="bg-slate-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                   <th className="p-4">Requested Person & Petition</th>
                   <th className="p-4">Claimant & Role</th>
-                  <th className="p-4">Proof Document</th>
+                  <th className="p-4">Proof (Video / Document)</th>
                   <th className="p-4">Status & Date</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
@@ -254,18 +254,35 @@ export default function AdminRequestedSignatureClaimsPage() {
                       </div>
                     </td>
 
-                    {/* Proof Document URL */}
+                    {/* Proof Document / Video */}
                     <td className="p-4 max-w-xs">
-                      <div>
-                        <a
-                          href={claim.proofDocumentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all text-cyan-700 underline truncate max-w-[200px]"
-                        >
-                          <i className="fas fa-external-link-alt text-[10px]"></i>
-                          View Proof URL
-                        </a>
+                      <div className="space-y-1.5">
+                        {claim.videoUrl && (
+                          <div>
+                            <a
+                              href={claim.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-all border border-rose-200 truncate max-w-[200px]"
+                            >
+                              <i className="fas fa-video text-rose-600 text-[11px]"></i>
+                              Watch Video Proof
+                            </a>
+                          </div>
+                        )}
+                        {claim.proofDocumentUrl && (
+                          <div>
+                            <a
+                              href={claim.proofDocumentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all text-cyan-700 underline truncate max-w-[200px]"
+                            >
+                              <i className="fas fa-file-alt text-[10px]"></i>
+                              View Proof Document
+                            </a>
+                          </div>
+                        )}
                         {claim.message && (
                           <p className="text-gray-600 text-[11px] mt-1 line-clamp-2 italic">
                             &quot;{claim.message}&quot;
@@ -343,7 +360,7 @@ export default function AdminRequestedSignatureClaimsPage() {
       {/* Details Modal */}
       {selectedClaim && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <i className="fas fa-file-signature text-blue-600"></i> Signature Claim Proof Details
@@ -378,17 +395,70 @@ export default function AdminRequestedSignatureClaimsPage() {
                 </p>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Proof Document / Link</label>
-                <a
-                  href={selectedClaim.proofDocumentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl block font-mono break-all hover:underline"
-                >
-                  {selectedClaim.proofDocumentUrl} <i className="fas fa-external-link-alt text-[10px] ml-1"></i>
-                </a>
-              </div>
+              {/* Video Proof Section */}
+              {selectedClaim.videoUrl && (
+                <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-rose-900 flex items-center gap-1.5">
+                      <i className="fas fa-video text-rose-600"></i> Verification Video Proof
+                    </label>
+                    <a
+                      href={selectedClaim.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-rose-700 hover:underline font-bold text-[11px] flex items-center gap-1"
+                    >
+                      Open Video <i className="fas fa-external-link-alt text-[10px]"></i>
+                    </a>
+                  </div>
+
+                  {(() => {
+                    const match = selectedClaim.videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+                    const yId = match && match[1]?.length === 11 ? match[1] : null;
+
+                    if (yId) {
+                      return (
+                        <div className="w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={`https://www.youtube.com/embed/${yId}`}
+                            title="Verification Video"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="w-full rounded-xl overflow-hidden bg-black max-h-64 flex items-center justify-center">
+                        <video
+                          src={selectedClaim.videoUrl}
+                          controls
+                          className="w-full max-h-64 object-contain"
+                        />
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Document Proof Section */}
+              {selectedClaim.proofDocumentUrl && (
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Proof Document / Link</label>
+                  <a
+                    href={selectedClaim.proofDocumentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl block font-mono break-all hover:underline"
+                  >
+                    {selectedClaim.proofDocumentUrl} <i className="fas fa-external-link-alt text-[10px] ml-1"></i>
+                  </a>
+                </div>
+              )}
 
               {selectedClaim.message && (
                 <div>
