@@ -24,6 +24,12 @@ export default function UserManagement() {
     const [nameInput, setNameInput] = useState("");
     const [nameLoading, setNameLoading] = useState(false);
 
+    // Full KYC Card / Data Inspector modal state
+    const [kycModalUser, setKycModalUser] = useState(null);
+    const [activeKycTab, setActiveKycTab] = useState("aadhaar"); // "aadhaar" | "pan" | "voter" | "raw"
+    const [copiedJson, setCopiedJson] = useState(false);
+    const [previewImage, setPreviewImage] = useState(null); // { url, title }
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     useEffect(() => {
@@ -219,6 +225,27 @@ export default function UserManagement() {
         }
     };
 
+    const openKycModal = (user, defaultTab = "aadhaar") => {
+        setKycModalUser(user);
+        setActiveKycTab(defaultTab);
+        setCopiedJson(false);
+    };
+
+    const closeKycModal = () => {
+        setKycModalUser(null);
+        setCopiedJson(false);
+    };
+
+    const handleCopyJson = (data) => {
+        try {
+            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+            setCopiedJson(true);
+            setTimeout(() => setCopiedJson(false), 2000);
+        } catch (e) {
+            console.error("Failed to copy JSON:", e);
+        }
+    };
+
     const isDummyUser = (user) => {
         if (!user) return false;
         if (typeof user === "object" && user.isDummy) return true;
@@ -318,12 +345,21 @@ export default function UserManagement() {
         }
 
         if (searchTerm) {
+            const term = searchTerm.toLowerCase();
             items = items.filter(user =>
-                user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.aadhaarKyc?.maskedAadhaar?.includes(searchTerm) ||
-                user.panKyc?.panNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.voterKyc?.voterId?.toLowerCase().includes(searchTerm.toLowerCase())
+                user.name?.toLowerCase().includes(term) ||
+                user.email?.toLowerCase().includes(term) ||
+                user.mobileNumber?.includes(term) ||
+                user.aadhaarKyc?.name?.toLowerCase().includes(term) ||
+                user.aadhaarKyc?.maskedAadhaar?.includes(term) ||
+                user.aadhaarKyc?.address?.toLowerCase().includes(term) ||
+                user.aadhaarKyc?.district?.toLowerCase().includes(term) ||
+                user.aadhaarKyc?.state?.toLowerCase().includes(term) ||
+                user.aadhaarKyc?.pincode?.includes(term) ||
+                user.panKyc?.panNumber?.toLowerCase().includes(term) ||
+                user.panKyc?.registeredName?.toLowerCase().includes(term) ||
+                user.voterKyc?.voterId?.toLowerCase().includes(term) ||
+                user.voterKyc?.registeredName?.toLowerCase().includes(term)
             );
         }
 
@@ -666,22 +702,40 @@ export default function UserManagement() {
                                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center border border-indigo-200/50">
                                                         <i className="fas fa-user text-indigo-600"></i>
                                                     </div>
-                                                    <span className="font-bold text-gray-900">{user.name || "Unnamed User"}</span>
-                                                    {isDummyUser(user) && (
-                                                        <span 
-                                                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 cursor-help ml-2 shrink-0"
-                                                            title="Rapid Creation Dummy Account (Default Password: dummy_password_12345)"
-                                                        >
-                                                            <i className="fas fa-robot text-[9px]"></i> Rapid Dummy
-                                                        </span>
-                                                    )}
-                                                    <button
-                                                        onClick={() => openNameModal(user)}
-                                                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all ml-1"
-                                                        title="Edit user name"
-                                                    >
-                                                        <i className="fas fa-pen text-[10px]"></i>
-                                                    </button>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="font-bold text-gray-900">{user.name || "Unnamed User"}</span>
+                                                            {isDummyUser(user) && (
+                                                                <span 
+                                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 cursor-help shrink-0"
+                                                                    title="Rapid Creation Dummy Account (Default Password: dummy_password_12345)"
+                                                                >
+                                                                    <i className="fas fa-robot text-[9px]"></i> Rapid Dummy
+                                                                </span>
+                                                            )}
+                                                            {user.aadhaarKyc?.status === "verified" && (
+                                                                <button
+                                                                    onClick={() => openKycModal(user, "aadhaar")}
+                                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200 transition-all cursor-pointer shrink-0"
+                                                                    title="Aadhaar Verified - Click to view full Aadhaar card & address"
+                                                                >
+                                                                    <i className="fas fa-id-card text-[9px] text-blue-600"></i> Aadhaar KYC
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => openNameModal(user)}
+                                                                className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                                title="Edit user name"
+                                                            >
+                                                                <i className="fas fa-pen text-[10px]"></i>
+                                                            </button>
+                                                        </div>
+                                                        {user.aadhaarKyc?.status === "verified" && user.aadhaarKyc?.name && user.aadhaarKyc.name !== user.name && (
+                                                            <span className="text-[11px] text-blue-600 font-medium mt-0.5 flex items-center gap-1">
+                                                                <i className="fas fa-id-badge text-[9px]"></i> Aadhaar Name: {user.aadhaarKyc.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -726,10 +780,20 @@ export default function UserManagement() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <div className="flex items-center justify-center gap-2">
+                                                <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                    {user.aadhaarKyc?.status === "verified" && (
+                                                        <button
+                                                            onClick={() => openKycModal(user, "aadhaar")}
+                                                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                                                            title="View full Aadhaar Card & Address"
+                                                        >
+                                                            <i className="fas fa-id-card text-blue-600"></i>
+                                                            KYC
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleToggleSuspension(user._id, user.isSuspended)}
-                                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                                             user.isSuspended
                                                                 ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200"
                                                                 : "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
@@ -739,7 +803,7 @@ export default function UserManagement() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleLoginAs(user)}
-                                                        className="px-4 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                                                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                                                         title="Login as user in a new tab"
                                                     >
                                                         <i className="fas fa-sign-in-alt"></i>
@@ -778,7 +842,7 @@ export default function UserManagement() {
                                             <i className={`fas fa-sort text-[10px] transition-opacity ${sortConfig.key === "name" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 text-sm font-bold text-gray-600">Verified Documents</th>
+                                    <th className="px-6 py-4 text-sm font-bold text-gray-600">Verified Identity & Documents</th>
                                     <th onClick={() => handleSort("createdAt")} className="px-6 py-4 text-sm font-bold text-gray-600 cursor-pointer hover:bg-gray-100/50 transition-colors group">
                                         <div className="flex items-center gap-2">
                                             Verification Date
@@ -795,15 +859,15 @@ export default function UserManagement() {
                                         <tr key={user._id} className="hover:bg-teal-50/30 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center border border-teal-200/50">
-                                                        <i className="fas fa-user text-teal-600"></i>
+                                                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center border border-teal-200/50 shadow-xs">
+                                                        <i className="fas fa-user-check text-teal-600 text-base"></i>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
                                                             <span className="font-bold text-gray-900">{user.name}</span>
                                                             {isDummyUser(user) && (
                                                                 <span 
-                                                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 cursor-help shrink-0"
+                                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 cursor-help shrink-0"
                                                                     title="Rapid Creation Dummy Account (Default Password: dummy_password_12345)"
                                                                 >
                                                                     <i className="fas fa-robot text-[9px]"></i> Rapid Dummy
@@ -811,39 +875,98 @@ export default function UserManagement() {
                                                             )}
                                                         </div>
                                                         <span className="text-xs text-gray-500">{user.email}</span>
+                                                        {user.mobileNumber && (
+                                                            <span className="text-[11px] text-gray-600 flex items-center gap-1 mt-0.5">
+                                                                <i className="fas fa-phone text-[9px] text-gray-400"></i> {user.mobileNumber}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-1">
+                                                <div className="flex flex-col gap-2 min-w-[280px] max-w-[400px]">
+                                                    {/* Aadhaar Card Preview Box */}
                                                     {user.aadhaarKyc?.status === "verified" && (
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Aadhaar:</span>
-                                                            <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                                                                {user.aadhaarKyc?.maskedAadhaar || "XXXX-XXXX-XXXX"}
-                                                            </span>
+                                                        <div className="p-3 bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-white rounded-xl border border-blue-200 shadow-xs">
+                                                            <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-blue-100">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <div className="w-5 h-5 rounded bg-blue-600 text-white flex items-center justify-center text-[10px]">
+                                                                        <i className="fas fa-id-card"></i>
+                                                                    </div>
+                                                                    <span className="text-[11px] font-black text-blue-950 uppercase tracking-tight">Aadhaar (UIDAI)</span>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => openKycModal(user, "aadhaar")}
+                                                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-extrabold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                                                                    title="View complete Aadhaar Card, Address, DOB, Gender, and Raw Data"
+                                                                >
+                                                                    <i className="fas fa-eye text-[9px]"></i> View Full Aadhaar
+                                                                </button>
+                                                            </div>
+                                                            <div className="mt-2 space-y-1 text-xs">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <span className="text-gray-500 font-medium">Aadhaar No:</span>
+                                                                    <span className="font-mono font-bold text-gray-900 bg-white px-1.5 py-0.5 rounded border border-gray-200">
+                                                                        {user.aadhaarKyc.maskedAadhaar || "XXXX-XXXX-XXXX"}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <span className="text-gray-500 font-medium">Name on Card:</span>
+                                                                    <span className="font-bold text-gray-800 truncate max-w-[170px]" title={user.aadhaarKyc.name || user.name}>
+                                                                        {user.aadhaarKyc.name || user.name}
+                                                                    </span>
+                                                                </div>
+                                                                {(user.aadhaarKyc.dob || user.aadhaarKyc.gender) && (
+                                                                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                                                                        <span className="text-gray-500 font-medium">DOB / Gender:</span>
+                                                                        <span className="text-gray-700">
+                                                                            {user.aadhaarKyc.dob || "—"}{user.aadhaarKyc.gender ? ` (${user.aadhaarKyc.gender})` : ""}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {(user.aadhaarKyc.address || user.aadhaarKyc.state || user.aadhaarKyc.pincode) && (
+                                                                    <div className="pt-1.5 border-t border-blue-100/70 text-[11px] text-gray-600">
+                                                                        <span className="text-gray-400 font-medium">Address: </span>
+                                                                        <span className="text-gray-800 font-medium line-clamp-1" title={user.aadhaarKyc.address || `${user.aadhaarKyc.district || ""} ${user.aadhaarKyc.state || ""} ${user.aadhaarKyc.pincode || ""}`}>
+                                                                            {user.aadhaarKyc.address || `${user.aadhaarKyc.district ? user.aadhaarKyc.district + ", " : ""}${user.aadhaarKyc.state || ""} ${user.aadhaarKyc.pincode || ""}`}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     )}
+
+                                                    {/* PAN Card Pill */}
                                                     {user.panKyc?.status === "verified" && (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">PAN:</span>
-                                                            <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                                                                {user.panKyc?.panNumber || "XXXXX0000X"}
-                                                            </span>
+                                                        <div className="p-2 bg-amber-50/80 rounded-lg border border-amber-200 flex items-center justify-between gap-2">
+                                                            <div className="text-xs">
+                                                                <span className="text-amber-900 font-extrabold mr-1">PAN:</span>
+                                                                <span className="font-mono font-bold text-gray-900">{user.panKyc.panNumber}</span>
+                                                                {user.panKyc.registeredName && <span className="text-gray-600 text-[11px] ml-1.5">({user.panKyc.registeredName})</span>}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => openKycModal(user, "pan")}
+                                                                className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold"
+                                                            >
+                                                                View PAN
+                                                            </button>
                                                         </div>
                                                     )}
+
+                                                    {/* Voter ID Pill */}
                                                     {user.voterKyc?.status === "verified" && (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Voter ID:</span>
-                                                            <span className="text-sm font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                                                                {user.voterKyc?.voterId || "XXXXXX"}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    {user.mobileNumber && (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <i className="fas fa-phone text-[10px] text-gray-400"></i>
-                                                            <span className="text-xs text-gray-600">{user.mobileNumber}</span>
+                                                        <div className="p-2 bg-purple-50/80 rounded-lg border border-purple-200 flex items-center justify-between gap-2">
+                                                            <div className="text-xs">
+                                                                <span className="text-purple-900 font-extrabold mr-1">Voter ID:</span>
+                                                                <span className="font-mono font-bold text-gray-900">{user.voterKyc.voterId}</span>
+                                                                {user.voterKyc.registeredName && <span className="text-gray-600 text-[11px] ml-1.5">({user.voterKyc.registeredName})</span>}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => openKycModal(user, "voter")}
+                                                                className="px-2 py-0.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-[10px] font-bold"
+                                                            >
+                                                                View Voter
+                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -861,14 +984,24 @@ export default function UserManagement() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() => handleLoginAs(user)}
-                                                    className="px-4 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 justify-center mx-auto"
-                                                    title="Login as user in a new tab"
-                                                >
-                                                    <i className="fas fa-sign-in-alt"></i>
-                                                    Login
-                                                </button>
+                                                <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                    <button
+                                                        onClick={() => openKycModal(user, "aadhaar")}
+                                                        className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+                                                        title="Inspect full Aadhaar card data and address"
+                                                    >
+                                                        <i className="fas fa-id-card text-blue-600"></i>
+                                                        KYC Data
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleLoginAs(user)}
+                                                        className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                                                        title="Login as user in a new tab"
+                                                    >
+                                                        <i className="fas fa-sign-in-alt"></i>
+                                                        Login
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -1040,6 +1173,658 @@ export default function UserManagement() {
                             >
                                 Cancel
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Comprehensive Aadhaar / Identity KYC Modal */}
+            {kycModalUser && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl max-w-3xl w-full my-8 shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+                        {/* Top Government-Style Tricolor Accent Strip */}
+                        <div className="h-2 w-full bg-gradient-to-r from-amber-500 via-white to-emerald-600"></div>
+
+                        {/* Modal Header */}
+                        <div className="p-6 bg-gradient-to-r from-gray-900 via-slate-900 to-blue-950 text-white flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 shadow-inner flex-shrink-0">
+                                    <i className="fas fa-id-card text-2xl"></i>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                                            UIDAI / e-KYC Record
+                                        </span>
+                                        {kycModalUser.aadhaarKyc?.status === "verified" ? (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-400/20">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                                Aadhaar Verified
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 bg-white/10 px-2 py-0.5 rounded">
+                                                Not Verified
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-xl font-extrabold text-white mt-1">
+                                        {kycModalUser.aadhaarKyc?.name || kycModalUser.name}
+                                    </h3>
+                                    <p className="text-xs text-blue-200/80 font-mono">
+                                        {kycModalUser.email} {kycModalUser.mobileNumber ? `• +91 ${kycModalUser.mobileNumber}` : ""}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={closeKycModal}
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all flex-shrink-0 cursor-pointer"
+                                title="Close"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        {/* Navigation Tabs */}
+                        <div className="flex border-b border-gray-200 bg-gray-50 px-6 gap-2 pt-2">
+                            <button
+                                onClick={() => setActiveKycTab("aadhaar")}
+                                className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+                                    activeKycTab === "aadhaar"
+                                        ? "bg-white text-blue-700 border-blue-600 shadow-xs"
+                                        : "text-gray-500 hover:text-gray-800 border-transparent"
+                                }`}
+                            >
+                                <i className="fas fa-id-card text-blue-600"></i>
+                                Aadhaar Card
+                                {kycModalUser.aadhaarKyc?.status === "verified" && (
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                )}
+                            </button>
+
+                            {kycModalUser.panKyc?.status === "verified" && (
+                                <button
+                                    onClick={() => setActiveKycTab("pan")}
+                                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+                                        activeKycTab === "pan"
+                                            ? "bg-white text-amber-700 border-amber-600 shadow-xs"
+                                            : "text-gray-500 hover:text-gray-800 border-transparent"
+                                    }`}
+                                >
+                                    <i className="fas fa-credit-card text-amber-600"></i>
+                                    PAN Card
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                </button>
+                            )}
+
+                            {kycModalUser.voterKyc?.status === "verified" && (
+                                <button
+                                    onClick={() => setActiveKycTab("voter")}
+                                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+                                        activeKycTab === "voter"
+                                            ? "bg-white text-purple-700 border-purple-600 shadow-xs"
+                                            : "text-gray-500 hover:text-gray-800 border-transparent"
+                                    }`}
+                                >
+                                    <i className="fas fa-vote-yea text-purple-600"></i>
+                                    Voter ID
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => setActiveKycTab("raw")}
+                                className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+                                    activeKycTab === "raw"
+                                        ? "bg-white text-gray-900 border-gray-700 shadow-xs"
+                                        : "text-gray-500 hover:text-gray-800 border-transparent"
+                                }`}
+                            >
+                                <i className="fas fa-code text-gray-500"></i>
+                                Raw JSON Payload
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto bg-gray-50/30">
+                            {/* TAB 1: AADHAAR CARD DETAILS */}
+                            {activeKycTab === "aadhaar" && (
+                                <div className="space-y-6">
+                                    {/* Visual Digital Aadhaar Card */}
+                                    <div className="relative bg-gradient-to-br from-amber-50/40 via-white to-blue-50/50 rounded-2xl p-6 border-2 border-blue-200/80 shadow-md overflow-hidden">
+                                        {/* Card Security Background Watermark */}
+                                        <div className="absolute right-4 bottom-2 opacity-5 pointer-events-none text-9xl font-black text-blue-900 select-none">
+                                            UIDAI
+                                        </div>
+
+                                        {/* Card Top Strip */}
+                                        <div className="flex items-center justify-between border-b border-gray-200/80 pb-3 mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                                    🇮🇳
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xs font-black text-gray-900 uppercase tracking-wide">भारत सरकार / Government of India</h4>
+                                                    <p className="text-[10px] font-bold text-blue-800 uppercase tracking-tight">भारतीय विशिष्ट पहचान प्राधिकरण / UIDAI</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 shadow-xs">
+                                                <i className="fas fa-check-circle"></i> Authenticated
+                                            </span>
+                                        </div>
+
+                                        {/* Card Body with Profile & Core Information */}
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                                            {/* Profile Photo / Avatar Column */}
+                                            <div className="md:col-span-4 flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-gray-200 shadow-xs text-center">
+                                                {kycModalUser.aadhaarKyc?.profileImage ? (
+                                                    <div className="w-28 h-36 rounded-lg overflow-hidden border border-gray-300 shadow-inner bg-gray-100 mb-2">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={
+                                                                kycModalUser.aadhaarKyc.profileImage.startsWith("data:")
+                                                                    ? kycModalUser.aadhaarKyc.profileImage
+                                                                    : `data:image/jpeg;base64,${kycModalUser.aadhaarKyc.profileImage}`
+                                                            }
+                                                            alt="Aadhaar Photo"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-28 h-36 rounded-lg bg-gradient-to-b from-blue-50 to-indigo-100 border border-blue-200 flex flex-col items-center justify-center text-blue-600 mb-2">
+                                                        <i className="fas fa-user-tie text-4xl mb-2 text-blue-400"></i>
+                                                        <span className="text-[9px] font-bold uppercase text-blue-700">Digital KYC</span>
+                                                    </div>
+                                                )}
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Verified Biometrics</span>
+                                            </div>
+
+                                            {/* Main Aadhaar Attributes */}
+                                            <div className="md:col-span-8 space-y-3.5">
+                                                <div>
+                                                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Full Name (As on Aadhaar)</p>
+                                                    <p className="text-lg font-black text-gray-900 mt-0.5">
+                                                        {kycModalUser.aadhaarKyc?.name || kycModalUser.name}
+                                                    </p>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="p-2.5 bg-white rounded-xl border border-gray-100 shadow-xs">
+                                                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Date of Birth (DOB)</p>
+                                                        <p className="text-xs font-bold text-gray-800 mt-0.5 flex items-center gap-1.5">
+                                                            <i className="fas fa-birthday-cake text-blue-500 text-[10px]"></i>
+                                                            {kycModalUser.aadhaarKyc?.dob || "Not specified"}
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-2.5 bg-white rounded-xl border border-gray-100 shadow-xs">
+                                                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Gender</p>
+                                                        <p className="text-xs font-bold text-gray-800 mt-0.5 flex items-center gap-1.5">
+                                                            <i className="fas fa-venus-mars text-indigo-500 text-[10px]"></i>
+                                                            {kycModalUser.aadhaarKyc?.gender || "Not specified"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {kycModalUser.aadhaarKyc?.careOf && (
+                                                    <div className="p-2.5 bg-white rounded-xl border border-gray-100 shadow-xs">
+                                                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Care Of (Father / Husband / Guardian)</p>
+                                                        <p className="text-xs font-bold text-gray-800 mt-0.5">
+                                                            {kycModalUser.aadhaarKyc.careOf}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Aadhaar Number Display Banner */}
+                                                <div className="p-3 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-xl text-white shadow-sm flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[9px] uppercase font-extrabold text-blue-300 tracking-widest block">Aadhaar Number</span>
+                                                        <span className="text-base font-mono font-black tracking-widest text-white">
+                                                            {kycModalUser.aadhaarKyc?.maskedAadhaar || "XXXX-XXXX-XXXX"}
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(kycModalUser.aadhaarKyc?.maskedAadhaar || "");
+                                                            alert("Aadhaar Number copied to clipboard!");
+                                                        }}
+                                                        className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                                        title="Copy Aadhaar Number"
+                                                    >
+                                                        <i className="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Bottom Card Tagline */}
+                                        <div className="mt-4 pt-3 border-t border-gray-200 text-center">
+                                            <span className="text-[11px] font-black text-red-700 tracking-wide">
+                                                मेरा आधार, मेरी पहचान (Mera Aadhaar, Meri Pehchan)
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Complete Address Card */}
+                                    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
+                                                <i className="fas fa-map-marked-alt"></i>
+                                            </div>
+                                            <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-tight">Full Residential Address (As Per Aadhaar)</h4>
+                                        </div>
+                                        <div className="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-100 text-xs font-semibold text-gray-800 leading-relaxed">
+                                            {kycModalUser.aadhaarKyc?.address || (
+                                                <span className="text-gray-400 italic">Complete address text was not provided in this verification payload.</span>
+                                            )}
+                                        </div>
+
+                                        {/* Address Breakdown Badges */}
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400 block">District</span>
+                                                <span className="text-xs font-bold text-gray-800 mt-0.5 block truncate">
+                                                    {kycModalUser.aadhaarKyc?.district || "N/A"}
+                                                </span>
+                                            </div>
+                                            <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400 block">State</span>
+                                                <span className="text-xs font-bold text-gray-800 mt-0.5 block truncate">
+                                                    {kycModalUser.aadhaarKyc?.state || "N/A"}
+                                                </span>
+                                            </div>
+                                            <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400 block">PIN Code</span>
+                                                <span className="text-xs font-bold font-mono text-gray-800 mt-0.5 block">
+                                                    {kycModalUser.aadhaarKyc?.pincode || "N/A"}
+                                                </span>
+                                            </div>
+                                            <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400 block">Country</span>
+                                                <span className="text-xs font-bold text-gray-800 mt-0.5 block">
+                                                    {kycModalUser.aadhaarKyc?.country || "India"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Uploaded / Fetched Aadhaar Card Scans & Images Section */}
+                                    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
+                                                    <i className="fas fa-camera"></i>
+                                                </div>
+                                                <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-tight">
+                                                    Aadhaar Card Document Scans & Images
+                                                </h4>
+                                            </div>
+                                            {(kycModalUser.aadhaarKyc?.frontImage || kycModalUser.aadhaarKyc?.backImage) ? (
+                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                                    Original Dual-Side Scans
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                                    Digital Record
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                            {/* Front Card Image */}
+                                            <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-200 flex flex-col justify-between">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                                        <i className="fas fa-id-card text-blue-600"></i>
+                                                        Aadhaar Front Side
+                                                    </span>
+                                                    {kycModalUser.aadhaarKyc?.frontImage && (
+                                                        <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                                                            Uploaded Scan
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {kycModalUser.aadhaarKyc?.frontImage ? (
+                                                    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-white shadow-xs">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={kycModalUser.aadhaarKyc.frontImage}
+                                                            alt="Aadhaar Front Side"
+                                                            className="w-full h-48 object-contain bg-slate-900/5 p-1 group-hover:scale-105 transition-transform duration-200 cursor-pointer"
+                                                            onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.frontImage, title: "Aadhaar Card - Front Side" })}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+                                                            <button
+                                                                onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.frontImage, title: "Aadhaar Card - Front Side" })}
+                                                                className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-gray-100"
+                                                            >
+                                                                <i className="fas fa-search-plus"></i> Enlarge
+                                                            </button>
+                                                            <a
+                                                                href={kycModalUser.aadhaarKyc.frontImage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                download
+                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-blue-700"
+                                                            >
+                                                                <i className="fas fa-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-44 rounded-xl border border-dashed border-gray-300 bg-white/60 flex flex-col items-center justify-center text-center p-4 text-gray-400">
+                                                        <i className="fas fa-id-card text-3xl mb-1.5 text-gray-300"></i>
+                                                        <p className="text-xs font-bold text-gray-500">No Front Image Scan</p>
+                                                        <p className="text-[11px] text-gray-400 mt-0.5">Verified via DigiLocker / UIDAI direct XML token</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Back Card Image */}
+                                            <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-200 flex flex-col justify-between">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                                        <i className="fas fa-map-marked-alt text-indigo-600"></i>
+                                                        Aadhaar Back Side (Address)
+                                                    </span>
+                                                    {kycModalUser.aadhaarKyc?.backImage && (
+                                                        <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                                                            Uploaded Scan
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {kycModalUser.aadhaarKyc?.backImage ? (
+                                                    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-white shadow-xs">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={kycModalUser.aadhaarKyc.backImage}
+                                                            alt="Aadhaar Back Side"
+                                                            className="w-full h-48 object-contain bg-slate-900/5 p-1 group-hover:scale-105 transition-transform duration-200 cursor-pointer"
+                                                            onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.backImage, title: "Aadhaar Card - Back Side" })}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+                                                            <button
+                                                                onClick={() => setPreviewImage({ url: kycModalUser.aadhaarKyc.backImage, title: "Aadhaar Card - Back Side" })}
+                                                                className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-gray-100"
+                                                            >
+                                                                <i className="fas fa-search-plus"></i> Enlarge
+                                                            </button>
+                                                            <a
+                                                                href={kycModalUser.aadhaarKyc.backImage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                download
+                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg pointer-events-auto flex items-center gap-1 cursor-pointer hover:bg-blue-700"
+                                                            >
+                                                                <i className="fas fa-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-44 rounded-xl border border-dashed border-gray-300 bg-white/60 flex flex-col items-center justify-center text-center p-4 text-gray-400">
+                                                        <i className="fas fa-map-marked-alt text-3xl mb-1.5 text-gray-300"></i>
+                                                        <p className="text-xs font-bold text-gray-500">No Back Image Scan</p>
+                                                        <p className="text-[11px] text-gray-400 mt-0.5">Verified via DigiLocker / UIDAI direct XML token</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Verification Audit Details & Cross-Check */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Verification Audit */}
+                                        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs space-y-2.5">
+                                            <h5 className="text-xs font-extrabold text-gray-900 uppercase tracking-tight flex items-center gap-1.5">
+                                                <i className="fas fa-shield-check text-blue-600"></i>
+                                                Verification Audit Trail
+                                            </h5>
+                                            <div className="space-y-2 text-xs">
+                                                <div className="flex justify-between py-1 border-b border-gray-100">
+                                                    <span className="text-gray-500 font-medium">Verification Method:</span>
+                                                    <span className="font-bold text-gray-800">
+                                                        {kycModalUser.aadhaarKyc?.verificationMethod === "digilocker"
+                                                            ? "DigiLocker OAuth (Govt. e-KYC)"
+                                                            : kycModalUser.aadhaarKyc?.verificationMethod === "ocr"
+                                                            ? "Dual-Side Card OCR Scan"
+                                                            : "Direct Aadhaar OTP / API"}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between py-1 border-b border-gray-100">
+                                                    <span className="text-gray-500 font-medium">Verification Date:</span>
+                                                    <span className="font-bold text-gray-800">
+                                                        {formatDateWithTime(kycModalUser.aadhaarKyc?.verifiedAt || kycModalUser.createdAt)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between py-1">
+                                                    <span className="text-gray-500 font-medium">Legal Status:</span>
+                                                    <span className="font-bold text-emerald-600">Legally Verified (IT Act 2000)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Account Cross-Check */}
+                                        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs space-y-2.5">
+                                            <h5 className="text-xs font-extrabold text-gray-900 uppercase tracking-tight flex items-center gap-1.5">
+                                                <i className="fas fa-user-check text-teal-600"></i>
+                                                Platform Account Matching
+                                            </h5>
+                                            <div className="space-y-2 text-xs">
+                                                <div className="flex justify-between py-1 border-b border-gray-100">
+                                                    <span className="text-gray-500 font-medium">Account Name:</span>
+                                                    <span className="font-bold text-gray-800">{kycModalUser.name}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1 border-b border-gray-100">
+                                                    <span className="text-gray-500 font-medium">Name Match Status:</span>
+                                                    <span className="font-bold text-emerald-600 flex items-center gap-1">
+                                                        <i className="fas fa-check-circle text-xs"></i>
+                                                        {kycModalUser.aadhaarKyc?.name && kycModalUser.aadhaarKyc.name.toLowerCase().trim() === kycModalUser.name?.toLowerCase().trim()
+                                                            ? "Exact Match (100%)"
+                                                            : "Verified Profile"}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between py-1">
+                                                    <span className="text-gray-500 font-medium">Account Type:</span>
+                                                    <span className="font-bold text-gray-800">
+                                                        {isDummyUser(kycModalUser) ? "🤖 Rapid Creation Dummy" : "🛡️ Genuine Organic User"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 2: PAN CARD DETAILS */}
+                            {activeKycTab === "pan" && kycModalUser.panKyc?.status === "verified" && (
+                                <div className="space-y-4">
+                                    <div className="p-6 bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 rounded-2xl border-2 border-amber-200 shadow-sm space-y-4">
+                                        <div className="flex items-center justify-between border-b border-amber-200/80 pb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg font-bold">
+                                                    <i className="fas fa-credit-card"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-extrabold text-amber-950 uppercase">Income Tax Department (Govt. of India)</h4>
+                                                    <p className="text-xs text-amber-700 font-semibold">Permanent Account Number (PAN) Card Verification</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-black text-amber-800 bg-amber-200/80 px-2.5 py-1 rounded-full uppercase">
+                                                Verified
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">PAN Number</span>
+                                                <span className="text-base font-mono font-black text-gray-900 mt-0.5 block">{kycModalUser.panKyc.panNumber}</span>
+                                            </div>
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">Registered Name on PAN</span>
+                                                <span className="text-sm font-bold text-gray-900 mt-0.5 block">{kycModalUser.panKyc.registeredName || "N/A"}</span>
+                                            </div>
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">Father&apos;s Name</span>
+                                                <span className="text-sm font-bold text-gray-800 mt-0.5 block">{kycModalUser.panKyc.fatherName || "N/A"}</span>
+                                            </div>
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">PAN Card Type</span>
+                                                <span className="text-sm font-bold text-gray-800 mt-0.5 block uppercase">{kycModalUser.panKyc.panType || "Individual"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 3: VOTER ID DETAILS */}
+                            {activeKycTab === "voter" && kycModalUser.voterKyc?.status === "verified" && (
+                                <div className="space-y-4">
+                                    <div className="p-6 bg-gradient-to-br from-purple-500/10 via-white to-purple-500/5 rounded-2xl border-2 border-purple-200 shadow-sm space-y-4">
+                                        <div className="flex items-center justify-between border-b border-purple-200/80 pb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg font-bold">
+                                                    <i className="fas fa-vote-yea"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-extrabold text-purple-950 uppercase">Election Commission of India (ECI)</h4>
+                                                    <p className="text-xs text-purple-700 font-semibold">Electoral Photo Identity Card (EPIC / Voter ID)</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-black text-purple-800 bg-purple-200/80 px-2.5 py-1 rounded-full uppercase">
+                                                Verified
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">Voter ID (EPIC Number)</span>
+                                                <span className="text-base font-mono font-black text-gray-900 mt-0.5 block">{kycModalUser.voterKyc.voterId}</span>
+                                            </div>
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">Elector Name</span>
+                                                <span className="text-sm font-bold text-gray-900 mt-0.5 block">{kycModalUser.voterKyc.registeredName || "N/A"}</span>
+                                            </div>
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">Relation Name & Type</span>
+                                                <span className="text-sm font-bold text-gray-800 mt-0.5 block">
+                                                    {kycModalUser.voterKyc.relation || "N/A"} {kycModalUser.voterKyc.relationType ? `(${kycModalUser.voterKyc.relationType})` : ""}
+                                                </span>
+                                            </div>
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100">
+                                                <span className="text-[10px] font-extrabold uppercase text-gray-400 block">District & Area</span>
+                                                <span className="text-sm font-bold text-gray-800 mt-0.5 block">
+                                                    {kycModalUser.voterKyc.district || kycModalUser.voterKyc.area || "N/A"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 4: RAW JSON PAYLOAD INSPECTOR */}
+                            {activeKycTab === "raw" && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-extrabold text-gray-700 uppercase tracking-tight">Complete Raw JSON Data from KYC Gateway</span>
+                                        <button
+                                            onClick={() => handleCopyJson({
+                                                user: {
+                                                    _id: kycModalUser._id,
+                                                    name: kycModalUser.name,
+                                                    email: kycModalUser.email,
+                                                    mobileNumber: kycModalUser.mobileNumber,
+                                                    isDummy: kycModalUser.isDummy,
+                                                },
+                                                aadhaarKyc: kycModalUser.aadhaarKyc,
+                                                panKyc: kycModalUser.panKyc,
+                                                voterKyc: kycModalUser.voterKyc,
+                                            })}
+                                            className="px-3 py-1 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                        >
+                                            {copiedJson ? (
+                                                <>
+                                                    <i className="fas fa-check text-emerald-400"></i> Copied to Clipboard!
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="fas fa-copy"></i> Copy Raw JSON
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <pre className="p-4 bg-gray-900 text-emerald-400 font-mono text-xs rounded-2xl overflow-x-auto max-h-[50vh] border border-gray-800 leading-relaxed shadow-inner">
+                                        {JSON.stringify(
+                                            {
+                                                user: {
+                                                    _id: kycModalUser._id,
+                                                    name: kycModalUser.name,
+                                                    email: kycModalUser.email,
+                                                    mobileNumber: kycModalUser.mobileNumber,
+                                                    isDummy: kycModalUser.isDummy,
+                                                },
+                                                aadhaarKyc: kycModalUser.aadhaarKyc || {},
+                                                panKyc: kycModalUser.panKyc || {},
+                                                voterKyc: kycModalUser.voterKyc || {},
+                                            },
+                                            null,
+                                            2
+                                        )}
+                                    </pre>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                            <span className="text-xs text-gray-500 font-medium flex items-center gap-1.5">
+                                <i className="fas fa-lock text-gray-400"></i>
+                                Protected Admin Data View
+                            </span>
+                            <button
+                                onClick={closeKycModal}
+                                className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Fullscreen Image Lightbox Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+                    <div className="relative max-w-4xl w-full bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl flex flex-col items-center p-4">
+                        <div className="w-full flex items-center justify-between pb-3 border-b border-gray-800 mb-3 text-white">
+                            <span className="text-sm font-bold flex items-center gap-2">
+                                <i className="fas fa-id-card text-blue-400"></i>
+                                {previewImage.title}
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={previewImage.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    <i className="fas fa-download"></i> Download Image
+                                </a>
+                                <button
+                                    onClick={() => setPreviewImage(null)}
+                                    className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="w-full max-h-[75vh] flex items-center justify-center overflow-auto p-2 bg-black/40 rounded-xl">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={previewImage.url}
+                                alt={previewImage.title}
+                                className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-xl"
+                            />
                         </div>
                     </div>
                 </div>
