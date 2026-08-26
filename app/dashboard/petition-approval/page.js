@@ -627,7 +627,8 @@ export default function PetitionApprovalPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
         </div>
