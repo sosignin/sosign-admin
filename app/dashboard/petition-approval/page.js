@@ -360,185 +360,202 @@ export default function PetitionApprovalPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {petitions.map((petition) => (
-                <div
-                  key={petition._id}
-                  className="border border-gray-200 rounded-2xl overflow-hidden bg-white hover:shadow-xl transition-all duration-300 group"
-                >
-                  {/* Banner/Header */}
-                  <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-5">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
-                            <i className="fas fa-file-alt text-blue-600 text-xl"></i>
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                              {petition.title}
-                            </h3>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-blue-50 text-blue-700 border border-blue-100">
-                                <i className="fas fa-globe text-[8px]"></i>
-                                {petition.country}
-                              </span>
-                              {petition.categories?.map((cat, i) => (
-                                <span key={i} className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-purple-50 text-purple-700 border border-purple-100">
-                                  <i className="fas fa-tag text-[8px]"></i>
-                                  {cat}
-                                </span>
-                              ))}
-                              {petition.motherPetition && (
-                                <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
-                                  <i className="fas fa-sitemap text-[8px]"></i>
-                                  Sub-Petition
-                                </span>
-                              )}
-                              <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-gray-100 text-gray-600 border border-gray-200">
-                                <i className="fas fa-clock text-[8px]"></i>
-                                {new Date(petition.createdAt).toLocaleDateString()}
-                              </span>
-                              {/* Card Translate Pill Button */}
-                              <button
-                                onClick={() => setIsLangOpen(true)}
-                                className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors"
-                                title="Translate this petition"
-                              >
-                                <i className="fas fa-language text-[10px]"></i>
-                                Translate ({currentLanguage.toUpperCase()})
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <button
-                          onClick={() => approvePetition(petition._id)}
-                          className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-bold text-sm"
-                        >
-                          <i className="fas fa-check-circle"></i>
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => rejectPetition(petition._id)}
-                          className="px-6 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-all duration-200 flex items-center justify-center gap-2 font-bold text-sm"
-                        >
-                          <i className="fas fa-times-circle"></i>
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+              {petitions.map((petition) => {
+                const isUpdate = Boolean(petition.hasPendingUpdates && petition.pendingUpdates);
+                const displayData = isUpdate ? { ...petition, ...petition.pendingUpdates } : petition;
 
-                  <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column: Content & Details */}
-                    <div className="lg:col-span-2 space-y-6">
-                      {/* Mother Petition Info Card */}
-                      {petition.motherPetition && (
-                        <div className="p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 rounded-xl border border-indigo-100/80 shadow-sm flex items-center justify-between gap-4">
+                return (
+                  <div
+                    key={petition._id}
+                    className="border border-gray-200 rounded-2xl overflow-hidden bg-white hover:shadow-xl transition-all duration-300 group"
+                  >
+                    {/* Pending Update Notice Banner */}
+                    {isUpdate && (
+                      <div className="bg-amber-50 border-b border-amber-200 px-5 py-2.5 flex items-center justify-between text-amber-900 text-xs font-bold">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                          <span>Live Petition Edit/Update Submitted for Review (Existing petition remains live on website)</span>
+                        </div>
+                        <span className="bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-wider">
+                          Live Update Pending
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Banner/Header */}
+                    <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-5">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-                              <i className="fas fa-sitemap"></i>
+                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+                              <i className="fas fa-file-alt text-blue-600 text-xl"></i>
                             </div>
                             <div>
-                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded border border-indigo-200/50">
-                                Linked Mother Petition
-                              </span>
-                              <h4 className="font-bold text-gray-900 text-sm mt-1">
-                                {typeof petition.motherPetition === "object" ? petition.motherPetition.title : petition.motherPetition}
-                              </h4>
+                              <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                {displayData.title}
+                              </h3>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-blue-50 text-blue-700 border border-blue-100">
+                                  <i className="fas fa-globe text-[8px]"></i>
+                                  {displayData.country}
+                                </span>
+                                {displayData.categories?.map((cat, i) => (
+                                  <span key={i} className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-purple-50 text-purple-700 border border-purple-100">
+                                    <i className="fas fa-tag text-[8px]"></i>
+                                    {cat}
+                                  </span>
+                                ))}
+                                {petition.motherPetition && (
+                                  <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                    <i className="fas fa-sitemap text-[8px]"></i>
+                                    Sub-Petition
+                                  </span>
+                                )}
+                                <span className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-gray-100 text-gray-600 border border-gray-200">
+                                  <i className="fas fa-clock text-[8px]"></i>
+                                  {new Date(petition.createdAt).toLocaleDateString()}
+                                </span>
+                                {/* Card Translate Pill Button */}
+                                <button
+                                  onClick={() => setIsLangOpen(true)}
+                                  className="px-2 py-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                  title="Translate this petition"
+                                >
+                                  <i className="fas fa-language text-[10px]"></i>
+                                  Translate ({currentLanguage.toUpperCase()})
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      )}
-
-                      {/* Image Preview if exists */}
-                      {petition.petitionDetails?.image && (
-                        <div className="relative h-48 w-full rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={petition.petitionDetails.image} 
-                            alt="Petition" 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-red-500 flex items-center gap-2">
-                            <i className="fas fa-exclamation-circle text-[10px]"></i>
-                            The Problem
-                          </label>
-                          <div className="p-4 bg-red-50/50 rounded-xl border border-red-100 min-h-[100px]">
-                            <div
-                              className="prose max-w-none text-sm text-gray-800 leading-relaxed font-medium"
-                              dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.problem || "<p className='text-gray-400 italic'>No problem statement provided.</p>" }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-green-500 flex items-center gap-2">
-                            <i className="fas fa-lightbulb text-[10px]"></i>
-                            The Solution
-                          </label>
-                          <div className="p-4 bg-green-50/50 rounded-xl border border-green-100 min-h-[100px]">
-                            <div
-                              className="prose max-w-none text-sm text-gray-800 leading-relaxed font-medium"
-                              dangerouslySetInnerHTML={{ __html: petition.petitionDetails?.solution || "<p className='text-gray-400 italic'>No proposed solution provided.</p>" }}
-                            />
-                          </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            onClick={() => approvePetition(petition._id)}
+                            className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-bold text-sm"
+                          >
+                            <i className="fas fa-check-circle"></i>
+                            {isUpdate ? "Approve Updates" : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => rejectPetition(petition._id)}
+                            className="px-6 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-all duration-200 flex items-center justify-center gap-2 font-bold text-sm"
+                          >
+                            <i className="fas fa-times-circle"></i>
+                            {isUpdate ? "Reject Updates" : "Reject"}
+                          </button>
                         </div>
                       </div>
-
-                      {/* Decision Makers */}
-                      {petition.decisionMakers?.length > 0 && (
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                            <i className="fas fa-users text-[10px]"></i>
-                            Decision Makers
-                          </label>
-                          <div className="flex flex-wrap gap-3">
-                            {petition.decisionMakers.map((dm, i) => (
-                              <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-3">
-                                <div className="w-8 h-8 bg-white rounded-full border border-gray-200 flex items-center justify-center">
-                                  <i className="fas fa-user-tie text-gray-400 text-xs"></i>
-                                </div>
-                                <div>
-                                  <p className="text-xs font-bold text-gray-900">{dm.name}</p>
-                                  <p className="text-[10px] text-gray-500">{dm.organization || "No Organization"}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Target Signers */}
-                      {petition.requestedSigners?.length > 0 && (
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                            <i className="fas fa-bullseye text-[10px]"></i>
-                            Target Signers
-                          </label>
-                          <div className="flex flex-wrap gap-3">
-                            {petition.requestedSigners.map((rs, i) => (
-                              <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-3">
-                                <div className="w-8 h-8 bg-white rounded-full border border-gray-200 flex items-center justify-center">
-                                  <i className="fas fa-star text-yellow-500 text-xs"></i>
-                                </div>
-                                <div>
-                                  <p className="text-xs font-bold text-gray-900">{rs.name}</p>
-                                  <p className="text-[10px] text-gray-500">
-                                    {rs.designation || "Target Signer"}{rs.email ? ` (${rs.email})` : ""}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
+
+                    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Left Column: Content & Details */}
+                      <div className="lg:col-span-2 space-y-6">
+                        {/* Mother Petition Info Card */}
+                        {petition.motherPetition && (
+                          <div className="p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 rounded-xl border border-indigo-100/80 shadow-sm flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                                <i className="fas fa-sitemap"></i>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded border border-indigo-200/50">
+                                  Linked Mother Petition
+                                </span>
+                                <h4 className="font-bold text-gray-900 text-sm mt-1">
+                                  {typeof petition.motherPetition === "object" ? petition.motherPetition.title : petition.motherPetition}
+                                </h4>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Image Preview if exists */}
+                        {displayData.petitionDetails?.image && (
+                          <div className="relative h-48 w-full rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img 
+                              src={displayData.petitionDetails.image} 
+                              alt="Petition" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-red-500 flex items-center gap-2">
+                              <i className="fas fa-exclamation-circle text-[10px]"></i>
+                              The Problem
+                            </label>
+                            <div className="p-4 bg-red-50/50 rounded-xl border border-red-100 min-h-[100px]">
+                              <div
+                                className="prose max-w-none text-sm text-gray-800 leading-relaxed font-medium"
+                                dangerouslySetInnerHTML={{ __html: displayData.petitionDetails?.problem || "<p className='text-gray-400 italic'>No problem statement provided.</p>" }}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-green-500 flex items-center gap-2">
+                              <i className="fas fa-lightbulb text-[10px]"></i>
+                              The Solution
+                            </label>
+                            <div className="p-4 bg-green-50/50 rounded-xl border border-green-100 min-h-[100px]">
+                              <div
+                                className="prose max-w-none text-sm text-gray-800 leading-relaxed font-medium"
+                                dangerouslySetInnerHTML={{ __html: displayData.petitionDetails?.solution || "<p className='text-gray-400 italic'>No proposed solution provided.</p>" }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Decision Makers */}
+                        {displayData.decisionMakers?.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                              <i className="fas fa-users text-[10px]"></i>
+                              Decision Makers
+                            </label>
+                            <div className="flex flex-wrap gap-3">
+                              {displayData.decisionMakers.map((dm, i) => (
+                                <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-white rounded-full border border-gray-200 flex items-center justify-center">
+                                    <i className="fas fa-user-tie text-gray-400 text-xs"></i>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-gray-900">{dm.name}</p>
+                                    <p className="text-[10px] text-gray-500">{dm.organization || "No Organization"}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Target Signers */}
+                        {displayData.requestedSigners?.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                              <i className="fas fa-bullseye text-[10px]"></i>
+                              Target Signers
+                            </label>
+                            <div className="flex flex-wrap gap-3">
+                              {displayData.requestedSigners.map((rs, i) => (
+                                <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-white rounded-full border border-gray-200 flex items-center justify-center">
+                                    <i className="fas fa-star text-yellow-500 text-xs"></i>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-gray-900">{rs.name}</p>
+                                    <p className="text-[10px] text-gray-500">
+                                      {rs.designation || "Target Signer"}{rs.email ? ` (${rs.email})` : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
                     {/* Right Column: Author Info & Requirements */}
                     <div className="space-y-6 lg:border-l lg:pl-6 border-gray-100">
