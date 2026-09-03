@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import AdminNotificationCenter from "@/components/AdminNotificationCenter";
+import AdminToastNotifier from "@/components/AdminToastNotifier";
 
 export default function DashboardLayout({ children }) {
     const router = useRouter();
@@ -12,6 +14,50 @@ export default function DashboardLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [notifCounts, setNotifCounts] = useState({
+        unreadCount: 0,
+        totalPendingAction: 0,
+        badges: {},
+        latest: [],
+    });
+
+    const fetchNotificationCounts = async () => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+            const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+            const res = await fetch(`${apiUrl}/api/admin/notifications/counts`, {
+                headers,
+                credentials: "include",
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setNotifCounts(data);
+            }
+        } catch (err) {
+            console.debug("Failed to fetch notification counts:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotificationCounts();
+        // Poll every 25 seconds for live real-time counts
+        const interval = setInterval(fetchNotificationCounts, 25000);
+
+        const handleRefresh = () => fetchNotificationCounts();
+        if (typeof window !== "undefined") {
+          window.addEventListener("refresh-admin-notifications", handleRefresh);
+        }
+
+        return () => {
+          clearInterval(interval);
+          if (typeof window !== "undefined") {
+            window.removeEventListener("refresh-admin-notifications", handleRefresh);
+          }
+        };
+    }, []);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -71,11 +117,20 @@ export default function DashboardLayout({ children }) {
             permissionKey: "dashboard",
         },
         {
+            name: "Notifications",
+            href: "/dashboard/notifications",
+            icon: "fas fa-bell",
+            color: "from-blue-600 to-indigo-600",
+            permissionKey: "dashboard",
+            badgeKey: "unreadCount",
+        },
+        {
             name: "Petition Approval",
             href: "/dashboard/petition-approval",
             icon: "fas fa-check-circle",
             color: "from-green-500 to-green-600",
             permissionKey: "petition-approval",
+            badgeKey: "petitionApproval",
         },
         {
             name: "Comment Approval",
@@ -83,6 +138,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-comments",
             color: "from-orange-500 to-orange-600",
             permissionKey: "comment-approval",
+            badgeKey: "commentApproval",
         },
         {
             name: "Rejected Petitions",
@@ -108,9 +164,10 @@ export default function DashboardLayout({ children }) {
         {
             name: "Stall Reports 🚨",
             href: "/dashboard/stall-reports",
-            icon: "fas fa-[#E63946] fa-store-slash",
+            icon: "fas fa-store-slash",
             color: "from-red-600 to-amber-600",
             permissionKey: "petitions",
+            badgeKey: "stallReports",
         },
         {
             name: "School Requests 🏫",
@@ -118,6 +175,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-school",
             color: "from-pink-500 to-indigo-600",
             permissionKey: "petitions",
+            badgeKey: "schoolRequests",
         },
         {
             name: "Stall Disputes 🛡️",
@@ -125,6 +183,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-shield-alt",
             color: "from-amber-500 to-rose-600",
             permissionKey: "petitions",
+            badgeKey: "stallDisputes",
         },
         {
             name: "Petition Objections 🚩",
@@ -132,6 +191,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-flag",
             color: "from-rose-600 to-red-700",
             permissionKey: "petitions",
+            badgeKey: "petitionReports",
         },
         {
             name: "Signature Claims ✍️",
@@ -139,6 +199,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-file-signature",
             color: "from-blue-600 to-indigo-700",
             permissionKey: "petitions",
+            badgeKey: "signatureClaims",
         },
         {
             name: "Successful Petitions",
@@ -167,6 +228,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-download",
             color: "from-teal-500 to-teal-600",
             permissionKey: "download-requests",
+            badgeKey: "downloadRequests",
         },
         {
             name: "Hide Requests",
@@ -174,6 +236,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-eye-slash",
             color: "from-orange-500 to-amber-600",
             permissionKey: "hide-requests",
+            badgeKey: "hideRequests",
         },
         {
             name: "Blog Management",
@@ -195,6 +258,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-envelope",
             color: "from-purple-500 to-indigo-600",
             permissionKey: "newsletters",
+            badgeKey: "contactMessages",
         },
         {
             name: "FAQ Management",
@@ -216,6 +280,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-money-check-alt",
             color: "from-rose-500 to-rose-600",
             permissionKey: "wallet-requests",
+            badgeKey: "walletRequests",
         },
         {
             name: "User Management",
@@ -259,6 +324,7 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-hand-holding-heart",
             color: "from-rose-500 to-red-600",
             permissionKey: "crowdfunding",
+            badgeKey: "crowdfunding",
         },
         {
             name: "Withdrawal Requests",
@@ -266,8 +332,15 @@ export default function DashboardLayout({ children }) {
             icon: "fas fa-money-bill-wave",
             color: "from-amber-500 to-orange-600",
             permissionKey: "withdrawals",
+            badgeKey: "withdrawals",
         },
     ];
+
+    const getItemBadgeCount = (item) => {
+        if (!item?.badgeKey || !notifCounts) return 0;
+        if (item.badgeKey === "unreadCount") return notifCounts.unreadCount || 0;
+        return notifCounts.badges?.[item.badgeKey] || 0;
+    };
 
     // Super admin only nav item
     const subAdminNavItem = {
@@ -423,22 +496,45 @@ export default function DashboardLayout({ children }) {
                 {/* Navigation - Scrollable Area */}
                 <nav className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                     {filteredNavItems.length > 0 ? (
-                        filteredNavItems.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive(item.href)
-                                    ? `bg-gradient-to-r ${item.color} text-white shadow-lg`
-                                    : "text-gray-600 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <i className={`${item.icon} text-lg ${isActive(item.href) ? "" : "text-gray-400 group-hover:text-gray-600"}`}></i>
-                                {sidebarOpen && (
-                                    <span className="font-medium">{item.name}</span>
-                                )}
-                            </Link>
-                        ))
+                        filteredNavItems.map((item) => {
+                            const badgeCount = getItemBadgeCount(item);
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive(item.href)
+                                        ? `bg-gradient-to-r ${item.color} text-white shadow-lg`
+                                        : "text-gray-600 hover:bg-gray-100"
+                                        }`}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <div className="relative flex items-center justify-center shrink-0">
+                                        <i className={`${item.icon} text-lg ${isActive(item.href) ? "" : "text-gray-400 group-hover:text-gray-600"}`}></i>
+                                        {!sidebarOpen && badgeCount > 0 && (
+                                            <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-red-600 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm animate-pulse">
+                                                {badgeCount > 9 ? "9+" : badgeCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {sidebarOpen && (
+                                        <>
+                                            <span className="font-medium truncate flex-1">{item.name}</span>
+                                            {badgeCount > 0 && (
+                                                <span
+                                                    className={`shrink-0 ml-auto px-2 py-0.5 text-[11px] font-bold rounded-full transition-all ${
+                                                        isActive(item.href)
+                                                            ? "bg-white/95 text-gray-900 shadow-sm"
+                                                            : "bg-red-500 text-white shadow-sm shadow-red-500/30 animate-pulse"
+                                                    }`}
+                                                >
+                                                    {badgeCount > 99 ? "99+" : badgeCount}
+                                                </span>
+                                            )}
+                                        </>
+                                    )}
+                                </Link>
+                            );
+                        })
                     ) : (
                         sidebarOpen && (
                             <div className="py-8 text-center text-gray-400">
@@ -482,8 +578,18 @@ export default function DashboardLayout({ children }) {
                         </h1>
                     </div>
 
-                    {/* Admin info */}
-                    <div className="flex items-center gap-4">
+                    {/* Header right: Notifications & Admin Profile */}
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        {/* Notification Bell Dropdown */}
+                        <AdminNotificationCenter
+                            counts={notifCounts}
+                            onRefresh={fetchNotificationCounts}
+                        />
+
+                        {/* Divider */}
+                        <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+
+                        {/* Admin info */}
                         <div className="text-right hidden sm:block">
                             <p className="text-sm font-semibold text-gray-800">
                                 {admin?.name || admin?.email || "Admin"}
@@ -516,6 +622,9 @@ export default function DashboardLayout({ children }) {
                 <div className="relative">
                     {children}
                 </div>
+
+                {/* Floating Real-Time Toast Notification */}
+                <AdminToastNotifier latestNotification={notifCounts?.latest?.[0]} />
             </main>
         </div>
     );

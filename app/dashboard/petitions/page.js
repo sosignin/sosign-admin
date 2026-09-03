@@ -24,6 +24,18 @@ export default function PetitionsPage() {
   const [slugModalError, setSlugModalError] = useState("");
   const [slugModalSuccess, setSlugModalSuccess] = useState("");
 
+  // Mother-Child petitions hierarchy state
+  const [showHierarchyManager, setShowHierarchyManager] = useState(true);
+  const [hierarchyData, setHierarchyData] = useState({ clusters: [], allPetitions: [] });
+  const [hierarchyLoading, setHierarchyLoading] = useState(false);
+  const [selectedMotherId, setSelectedMotherId] = useState("");
+  const [selectedChildId, setSelectedChildId] = useState("");
+  const [motherSearchQuery, setMotherSearchQuery] = useState("");
+  const [childSearchQuery, setChildSearchQuery] = useState("");
+  const [linkActionLoading, setLinkActionLoading] = useState(false);
+  const [linkActionMessage, setLinkActionMessage] = useState({ text: "", type: "" });
+  const [unlinkLoadingId, setUnlinkLoadingId] = useState(null);
+
   // Fetch petitions from backend
   const fetchPetitions = async (page = 1, searchTerm = "", country = "") => {
     try {
@@ -249,8 +261,150 @@ export default function PetitionsPage() {
   // Get unique countries for filter
   const countries = [...new Set(petitions.map((p) => p.country))].sort();
 
+  // Fetch Mother-Child hierarchy data
+  const fetchHierarchy = async () => {
+    try {
+      setHierarchyLoading(true);
+      const res = await authFetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions-hierarchy/mother-child`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setHierarchyData(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch hierarchy:", err);
+    } finally {
+      setHierarchyLoading(false);
+    }
+  };
+
+  // Link Child to Mother
+  const handleLinkMotherChild = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!selectedMotherId) {
+      setLinkActionMessage({ text: "Please select a primary Mother Petition first.", type: "error" });
+      return;
+    }
+    if (!selectedChildId) {
+      setLinkActionMessage({ text: "Please select a Child Petition to connect.", type: "error" });
+      return;
+    }
+    if (selectedMotherId === selectedChildId) {
+      setLinkActionMessage({ text: "A petition cannot be linked as its own child.", type: "error" });
+      return;
+    }
+
+    try {
+      setLinkActionLoading(true);
+      setLinkActionMessage({ text: "", type: "" });
+
+      const res = await authFetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/link-mother-child`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            motherPetitionId: selectedMotherId,
+            childPetitionIds: [selectedChildId],
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to link petitions");
+      }
+
+      setLinkActionMessage({ text: data.message, type: "success" });
+      setSelectedChildId("");
+      setChildSearchQuery("");
+
+      await Promise.all([
+        fetchHierarchy(),
+        fetchPetitions(currentPage, search, selectedCountry),
+      ]);
+    } catch (err) {
+      setLinkActionMessage({ text: err.message, type: "error" });
+    } finally {
+      setLinkActionLoading(false);
+    }
+  };
+
+  // Unlink a Child petition
+  const handleUnlinkChild = async (childId, childTitle) => {
+    if (!confirm(`Are you sure you want to unlink "${childTitle || "this child petition"}" from its mother petition?`)) {
+      return;
+    }
+
+    try {
+      setUnlinkLoadingId(childId);
+      const res = await authFetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/admin/petitions/${childId}/unlink-mother`,
+        { method: "PUT" }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to unlink petition");
+      }
+
+      setLinkActionMessage({ text: data.message, type: "success" });
+
+      await Promise.all([
+        fetchHierarchy(),
+        fetchPetitions(currentPage, search, selectedCountry),
+      ]);
+    } catch (err) {
+      alert("Failed to unlink petition: " + err.message);
+    } finally {
+      setUnlinkLoadingId(null);
+    }
+  };
+
+  // Preselect petition from row action
+  const handlePreselectForHierarchy = (e, petition, asRole = "mother") => {
+    e.stopPropagation();
+    setShowHierarchyManager(true);
+    if (asRole === "mother") {
+      setSelectedMotherId(petition._id);
+    } else {
+      setSelectedChildId(petition._id);
+    }
+    const el = document.getElementById("mother-child-manager-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Filtered dropdown options for Mother selection
+  const filteredMotherOptions = (hierarchyData.allPetitions || []).filter((p) => {
+    if (motherSearchQuery.trim()) {
+      return p.title.toLowerCase().includes(motherSearchQuery.toLowerCase());
+    }
+    return true;
+  });
+
+  // Filtered dropdown options for Child selection
+  const filteredChildOptions = (hierarchyData.allPetitions || []).filter((p) => {
+    if (selectedMotherId && p._id === selectedMotherId) return false;
+    if (childSearchQuery.trim()) {
+      return p.title.toLowerCase().includes(childSearchQuery.toLowerCase());
+    }
+    return true;
+  });
+
+  const selectedMotherPetition = (hierarchyData.allPetitions || []).find((p) => p._id === selectedMotherId);
+  const selectedChildPetition = (hierarchyData.allPetitions || []).find((p) => p._id === selectedChildId);
+  const currentlyLinkedChildrenForSelectedMother =
+    (hierarchyData.clusters || []).find((c) => c._id === selectedMotherId)?.children ||
+    (hierarchyData.allPetitions || []).filter(
+      (p) => p.motherPetition?._id === selectedMotherId || p.motherPetition === selectedMotherId
+    );
+
   useEffect(() => {
     fetchPetitions();
+    fetchHierarchy();
   }, []);
 
   if (loading && petitions.length === 0) {
@@ -339,6 +493,346 @@ export default function PetitionsPage() {
         </div>
       </div>
 
+      {/* Mother & Child Petitions Hierarchy Manager Section */}
+      <div id="mother-child-manager-section" className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200/50 relative overflow-hidden transition-all duration-300">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
+
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl text-white shadow-md shadow-purple-500/20">
+              <i className="fas fa-sitemap text-lg"></i>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xl font-bold text-gray-900">Mother & Child Petitions Hierarchy</h3>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                  {hierarchyData.clusters?.length || 0} Mother Campaign{hierarchyData.clusters?.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Designate any petition as a primary Mother Campaign and link related sub-petitions to combine signatures and community reach.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={() => fetchHierarchy()}
+              disabled={hierarchyLoading}
+              className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              title="Refresh hierarchy"
+            >
+              <i className={`fas fa-sync-alt ${hierarchyLoading ? "fa-spin" : ""}`}></i>
+              Refresh
+            </button>
+            <button
+              onClick={() => setShowHierarchyManager(!showHierarchyManager)}
+              className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <i className={`fas ${showHierarchyManager ? "fa-chevron-up" : "fa-chevron-down"}`}></i>
+              {showHierarchyManager ? "Collapse" : "Expand Section"}
+            </button>
+          </div>
+        </div>
+
+        {showHierarchyManager && (
+          <div className="mt-6 space-y-6 animate-in fade-in duration-200">
+            {/* Feedback notification message */}
+            {linkActionMessage.text && (
+              <div
+                className={`p-4 rounded-xl flex items-center justify-between text-xs font-semibold border ${
+                  linkActionMessage.type === "success"
+                    ? "bg-green-50 text-green-800 border-green-200"
+                    : "bg-red-50 text-red-800 border-red-200"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <i className={`fas ${linkActionMessage.type === "success" ? "fa-check-circle text-green-600" : "fa-exclamation-circle text-red-600"} text-sm`}></i>
+                  <span>{linkActionMessage.text}</span>
+                </div>
+                <button
+                  onClick={() => setLinkActionMessage({ text: "", type: "" })}
+                  className="text-gray-400 hover:text-gray-600 ml-2"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+            )}
+
+            {/* Linking Interface - 2 Columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-gradient-to-br from-slate-50 to-purple-50/30 p-5 rounded-2xl border border-purple-100/60">
+              {/* Step 1: Select Mother Petition */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px]">1</span>
+                    <i className="fas fa-crown text-amber-500"></i>
+                    <span>Select Mother Petition (Primary Campaign)</span>
+                  </label>
+                  {selectedMotherId && (
+                    <button
+                      onClick={() => setSelectedMotherId("")}
+                      className="text-[11px] text-gray-400 hover:text-red-500 font-semibold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Search input for Mother dropdown */}
+                <div className="relative">
+                  <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                  <input
+                    type="text"
+                    placeholder="Filter mother petition by title..."
+                    value={motherSearchQuery}
+                    onChange={(e) => setMotherSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none"
+                  />
+                </div>
+
+                {/* Dropdown for Mother selection */}
+                <select
+                  value={selectedMotherId}
+                  onChange={(e) => setSelectedMotherId(e.target.value)}
+                  className="w-full p-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none font-medium text-gray-800"
+                >
+                  <option value="">-- Choose Mother Petition --</option>
+                  {filteredMotherOptions.map((pet) => (
+                    <option key={pet._id} value={pet._id}>
+                      {pet.title} (Sigs: {pet.numberOfSignatures || 0}) {pet.motherPetition ? "• [Currently Child]" : ""}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Selected Mother Card Preview */}
+                {selectedMotherPetition && (
+                  <div className="p-3.5 bg-white rounded-xl border border-purple-200/80 shadow-xs space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 mb-1">
+                          <i className="fas fa-crown text-amber-500 text-[9px]"></i> Mother Campaign
+                        </span>
+                        <h4 className="text-xs font-bold text-gray-900 line-clamp-2">
+                          {selectedMotherPetition.title}
+                        </h4>
+                      </div>
+                      <span className="text-xs font-extrabold text-purple-600 shrink-0 bg-purple-50 px-2 py-1 rounded-lg">
+                        {(selectedMotherPetition.numberOfSignatures || 0).toLocaleString()} sigs
+                      </span>
+                    </div>
+
+                    {/* Currently linked children under this mother */}
+                    {currentlyLinkedChildrenForSelectedMother.length > 0 ? (
+                      <div className="pt-2 border-t border-gray-100">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>Currently Linked Children ({currentlyLinkedChildrenForSelectedMother.length}):</span>
+                        </p>
+                        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                          {currentlyLinkedChildrenForSelectedMother.map((child) => (
+                            <div
+                              key={child._id}
+                              className="p-2 rounded-lg bg-gray-50 hover:bg-purple-50/50 border border-gray-200/70 flex items-center justify-between gap-2 text-xs"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="font-semibold text-gray-800 truncate text-[11px]">{child.title}</p>
+                                <span className="text-[10px] text-gray-500">{(child.numberOfSignatures || 0).toLocaleString()} signatures</span>
+                              </div>
+                              <button
+                                onClick={() => handleUnlinkChild(child._id, child.title)}
+                                disabled={unlinkLoadingId === child._id}
+                                className="px-2 py-1 rounded-md bg-red-50 hover:bg-red-100 text-red-600 text-[10px] font-bold shrink-0 transition-colors"
+                                title="Unlink this child"
+                              >
+                                {unlinkLoadingId === child._id ? <i className="fas fa-spinner fa-spin"></i> : "Unlink"}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-gray-400 italic pt-1 border-t border-gray-100">
+                        No child petitions linked yet. Select a child petition on the right to link.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Step 2: Select Child Petition */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">2</span>
+                    <i className="fas fa-link text-indigo-500"></i>
+                    <span>Select Child Petition (Sub-Petition to Link)</span>
+                  </label>
+                  {selectedChildId && (
+                    <button
+                      onClick={() => setSelectedChildId("")}
+                      className="text-[11px] text-gray-400 hover:text-red-500 font-semibold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Search input for Child dropdown */}
+                <div className="relative">
+                  <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                  <input
+                    type="text"
+                    placeholder="Filter child petition by title..."
+                    value={childSearchQuery}
+                    onChange={(e) => setChildSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+                  />
+                </div>
+
+                {/* Dropdown for Child selection */}
+                <select
+                  value={selectedChildId}
+                  onChange={(e) => setSelectedChildId(e.target.value)}
+                  className="w-full p-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none font-medium text-gray-800"
+                >
+                  <option value="">-- Choose Child Petition to Link --</option>
+                  {filteredChildOptions.map((pet) => (
+                    <option key={pet._id} value={pet._id}>
+                      {pet.title} (Sigs: {pet.numberOfSignatures || 0}) {pet.motherPetition ? "• [Linked to another Mother]" : ""}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Selected Child Card Preview */}
+                {selectedChildPetition && (
+                  <div className="p-3.5 bg-white rounded-xl border border-indigo-200/80 shadow-xs space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 mb-1">
+                          <i className="fas fa-link text-indigo-500 text-[9px]"></i> Sub-Petition
+                        </span>
+                        <h4 className="text-xs font-bold text-gray-900 line-clamp-2">
+                          {selectedChildPetition.title}
+                        </h4>
+                      </div>
+                      <span className="text-xs font-extrabold text-indigo-600 shrink-0 bg-indigo-50 px-2 py-1 rounded-lg">
+                        {(selectedChildPetition.numberOfSignatures || 0).toLocaleString()} sigs
+                      </span>
+                    </div>
+
+                    {selectedChildPetition.motherPetition && (
+                      <p className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                        <i className="fas fa-info-circle mr-1"></i>
+                        Notice: This petition is currently linked to &quot;{selectedChildPetition.motherPetition.title || "another mother"}&quot;. Linking it here will transfer it to the new Mother Petition.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Link Action Button */}
+                <button
+                  type="button"
+                  onClick={handleLinkMotherChild}
+                  disabled={linkActionLoading || !selectedMotherId || !selectedChildId}
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 transform active:scale-98"
+                >
+                  {linkActionLoading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span>Linking Petitions...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-link"></i>
+                      <span>Link Child to Mother Petition</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Active Mother-Child Clusters View */}
+            <div>
+              <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i className="fas fa-layer-group text-purple-600"></i>
+                <span>Active Mother Campaigns Overview ({hierarchyData.clusters?.length || 0})</span>
+              </h4>
+
+              {hierarchyData.clusters && hierarchyData.clusters.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {hierarchyData.clusters.map((cluster) => (
+                    <div
+                      key={cluster._id}
+                      className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-3"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-1 mb-1.5">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                            👑 Mother Campaign
+                          </span>
+                          <span className="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                            {(cluster.combinedSignatures || 0).toLocaleString()} combined sigs
+                          </span>
+                        </div>
+                        <h5 className="font-bold text-xs text-gray-900 line-clamp-2 leading-snug">
+                          {cluster.title}
+                        </h5>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {cluster.childrenCount} linked sub-petition{cluster.childrenCount === 1 ? "" : "s"}
+                        </p>
+                      </div>
+
+                      {/* Sub-petitions pill list */}
+                      <div className="space-y-1.5 pt-2 border-t border-gray-100 max-h-36 overflow-y-auto custom-scrollbar">
+                        {cluster.children?.map((child) => (
+                          <div
+                            key={child._id}
+                            className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-gray-50 text-[11px]"
+                          >
+                            <span className="truncate font-medium text-gray-700 flex-1" title={child.title}>
+                              • {child.title}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-bold shrink-0">
+                              {(child.numberOfSignatures || 0).toLocaleString()}
+                            </span>
+                            <button
+                              onClick={() => handleUnlinkChild(child._id, child.title)}
+                              disabled={unlinkLoadingId === child._id}
+                              className="text-gray-400 hover:text-red-600 p-0.5"
+                              title="Unlink"
+                            >
+                              <i className="fas fa-times text-[10px]"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Select this mother to add more children */}
+                      <button
+                        onClick={() => {
+                          setSelectedMotherId(cluster._id);
+                          const el = document.getElementById("mother-child-manager-section");
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                        className="w-full py-1.5 rounded-lg text-center text-xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-purple-200 transition-colors"
+                      >
+                        + Add Child to this Mother
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-6 px-4 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200 text-xs text-gray-500">
+                  <i className="fas fa-info-circle text-purple-500 mb-1 text-base block"></i>
+                  No Mother & Child relationships linked yet. Select a primary Mother Petition and Child Petition above to establish your first cluster!
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Error Message */}
       {error && (
         <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-6 py-4 rounded-xl shadow-sm">
@@ -421,6 +915,24 @@ export default function PetitionsPage() {
                           <i className="fas fa-bullseye mr-1 text-[10px]"></i>
                           Target Signers: {petition.requestedSigners.map(s => s.name).join(", ")}
                         </p>
+                      )}
+
+                      {/* Mother & Child Hierarchy Badges */}
+                      {petition.subPetitionsCount > 0 && (
+                        <div className="mt-1.5 flex items-center gap-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 border border-purple-200">
+                            <i className="fas fa-crown text-amber-500 text-[9px]"></i>
+                            Mother Campaign ({petition.subPetitionsCount} children)
+                          </span>
+                        </div>
+                      )}
+                      {petition.motherPetition && (
+                        <div className="mt-1.5 flex items-center gap-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 truncate max-w-[240px]">
+                            <i className="fas fa-link text-blue-600 text-[9px]"></i>
+                            Child of: {petition.motherPetition.title || "Mother Campaign"}
+                          </span>
+                        </div>
                       )}
                     </div>
                   </td>
@@ -517,6 +1029,15 @@ export default function PetitionsPage() {
                       >
                         <i className="fas fa-school text-xs"></i>
                         {petition.showSchoolStallMap ? "School Map" : "+ School Map"}
+                      </button>
+                      {/* Link Parent/Child Hierarchy Button */}
+                      <button
+                        onClick={(e) => handlePreselectForHierarchy(e, petition, petition.motherPetition ? "child" : "mother")}
+                        className="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 rounded-lg font-medium text-xs transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                        title="Link as Mother Campaign or Child Petition"
+                      >
+                        <i className="fas fa-sitemap text-xs text-purple-600"></i>
+                        Link Parent/Child
                       </button>
                       {/* Delete Button */}
                       <button
