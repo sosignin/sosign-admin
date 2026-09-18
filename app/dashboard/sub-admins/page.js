@@ -10,6 +10,7 @@ const ALL_PERMISSIONS = [
     { key: "comment-approval", label: "Comment Approval", icon: "fas fa-comments", color: "orange" },
     { key: "petitions", label: "All Petitions", icon: "fas fa-file-alt", color: "purple" },
     { key: "successfulpetitions", label: "Successful Petitions", icon: "fas fa-trophy", color: "yellow" },
+    { key: "victory-requests", label: "Victory Requests", icon: "fas fa-award", color: "amber" },
     { key: "ads", label: "Ads Management", icon: "fas fa-ad", color: "pink" },
     { key: "download-requests", label: "Download Requests", icon: "fas fa-download", color: "teal" },
     { key: "hide-requests", label: "Hide Requests", icon: "fas fa-eye-slash", color: "amber" },

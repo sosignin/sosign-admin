@@ -202,6 +202,14 @@ export default function DashboardLayout({ children }) {
             badgeKey: "signatureClaims",
         },
         {
+            name: "Victory Requests 🏆",
+            href: "/dashboard/victory-requests",
+            icon: "fas fa-award",
+            color: "from-amber-500 to-yellow-600",
+            permissionKey: "successfulpetitions",
+            badgeKey: "victoryRequests",
+        },
+        {
             name: "Successful Petitions",
             href: "/dashboard/successfulpetitions",
             icon: "fas fa-trophy",
