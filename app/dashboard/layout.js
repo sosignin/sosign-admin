@@ -298,6 +298,21 @@ export default function DashboardLayout({ children }) {
             permissionKey: "users",
         },
         {
+            name: "Deletion Requests 🗑️",
+            href: "/dashboard/deletion-requests",
+            icon: "fas fa-user-times",
+            color: "from-rose-600 to-red-700",
+            permissionKey: "users",
+            badgeKey: "deletionRequests",
+        },
+        {
+            name: "Consent Ledger 📜",
+            href: "/dashboard/consent-logs",
+            icon: "fas fa-file-contract",
+            color: "from-blue-600 to-teal-600",
+            permissionKey: "users",
+        },
+        {
             name: "Plan Management",
             href: "/dashboard/plans",
             icon: "fas fa-user-tag",
