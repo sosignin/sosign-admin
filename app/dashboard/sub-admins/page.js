@@ -15,9 +15,17 @@ const ALL_PERMISSIONS = [
     { key: "download-requests", label: "Download Requests", icon: "fas fa-download", color: "teal" },
     { key: "hide-requests", label: "Hide Requests", icon: "fas fa-eye-slash", color: "amber" },
     { key: "blogs", label: "Blog Management", icon: "fas fa-blog", color: "cyan" },
+    { key: "newsletters", label: "Newsletter Management", icon: "fas fa-envelope-open-text", color: "pink" },
+    { key: "contact-messages", label: "Contact Messages 📩", icon: "fas fa-envelope", color: "purple" },
     { key: "wallets", label: "Wallet Management", icon: "fas fa-wallet", color: "emerald" },
     { key: "wallet-requests", label: "Wallet Requests", icon: "fas fa-money-check-alt", color: "rose" },
     { key: "users", label: "User Management", icon: "fas fa-users", color: "indigo" },
+    { key: "deletion-requests", label: "Deletion Requests 🗑️", icon: "fas fa-user-times", color: "rose" },
+    { key: "consent-logs", label: "Consent Ledger 📜", icon: "fas fa-file-contract", color: "teal" },
+    { key: "access-logs", label: "Access Logs 🛡️", icon: "fas fa-shield-alt", color: "slate" },
+    { key: "backups", label: "Data Backups 💾", icon: "fas fa-database", color: "emerald" },
+    { key: "data-breaches", label: "Breach Response 🚨", icon: "fas fa-exclamation-triangle", color: "red" },
+    { key: "vendor-governance", label: "Vendor Governance 🏢", icon: "fas fa-building", color: "indigo" },
     { key: "categories", label: "Category Management", icon: "fas fa-tags", color: "fuchsia" },
     { key: "crowdfunding", label: "Crowdfunding Approval", icon: "fas fa-hand-holding-usd", color: "lime" },
     { key: "withdrawals", label: "Withdrawal Requests", icon: "fas fa-money-bill-wave", color: "orange" },
@@ -538,7 +546,7 @@ export default function SubAdminManagement() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto p-1 pr-2">
                                     {ALL_PERMISSIONS.map((perm) => (
                                         <label
                                             key={perm.key}
@@ -643,7 +651,7 @@ export default function SubAdminManagement() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto p-1 pr-2">
                                     {ALL_PERMISSIONS.map((perm) => (
                                         <label
                                             key={perm.key}
