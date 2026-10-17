@@ -129,6 +129,24 @@ export default function ConsentLogsPage() {
     }
   };
 
+  const formatIpAddress = (ip) => {
+    if (!ip) return "127.0.0.1";
+    let clean = String(ip).trim();
+    if (clean.startsWith("::ffff:")) {
+      clean = clean.replace("::ffff:", "");
+    }
+    if (
+      clean === "::1" ||
+      clean === "1" ||
+      clean === "::" ||
+      clean === "localhost" ||
+      clean === "::ffff:127.0.0.1"
+    ) {
+      return "127.0.0.1";
+    }
+    return clean;
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Top Banner / Statutory Notice */}
@@ -377,7 +395,7 @@ export default function ConsentLogsPage() {
 
                     <td className="py-3 px-4 whitespace-nowrap text-xs text-slate-600">
                       <div className="font-mono text-[11px] text-slate-700">
-                        {log.ipAddress || "127.0.0.1"}
+                        {formatIpAddress(log.ipAddress)}
                       </div>
                       <div className="text-[10px] text-slate-400 uppercase tracking-wider">
                         {log.method || "affirmative_action"}
@@ -514,7 +532,7 @@ export default function ConsentLogsPage() {
                 </h4>
                 <div className="p-3 bg-slate-900 text-slate-200 rounded-lg font-mono text-xs space-y-1">
                   <div>
-                    <span className="text-slate-400">IP Address:</span> {selectedLog.ipAddress || "127.0.0.1"}
+                    <span className="text-slate-400">IP Address:</span> {formatIpAddress(selectedLog.ipAddress)}
                   </div>
                   <div className="break-all">
                     <span className="text-slate-400">User Agent:</span> {selectedLog.userAgent || "Unknown"}

@@ -313,6 +313,20 @@ export default function DashboardLayout({ children }) {
             permissionKey: "users",
         },
         {
+            name: "Access Logs 🛡️",
+            href: "/dashboard/access-logs",
+            icon: "fas fa-shield-alt",
+            color: "from-slate-700 to-indigo-800",
+            permissionKey: "users",
+        },
+        {
+            name: "Data Backups 💾",
+            href: "/dashboard/backups",
+            icon: "fas fa-database",
+            color: "from-emerald-600 to-teal-700",
+            permissionKey: "users",
+        },
+        {
             name: "Plan Management",
             href: "/dashboard/plans",
             icon: "fas fa-user-tag",
