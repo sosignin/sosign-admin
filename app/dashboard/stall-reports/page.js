@@ -106,6 +106,29 @@ export default function AdminStallReportsPage() {
     }
   };
 
+  const handleDelete = async (reportId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this resolved stall record from history? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setActionLoading(reportId);
+      const res = await authFetch(`${apiUrl}/api/stall-reports/admin/${reportId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        await fetchReports(statusFilter);
+      } else {
+        const err = await res.json();
+        alert(err.message || "Failed to delete stall report.");
+      }
+    } catch (err) {
+      alert("Error deleting report: " + err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
@@ -321,14 +344,24 @@ export default function AdminStallReportsPage() {
                 )}
 
                 {statusFilter === "resolved" && (
-                  <div className="pt-2">
+                  <div className="flex gap-2 pt-2">
                     <button
                       onClick={() => handleApprove(report._id)}
                       disabled={actionLoading === report._id}
-                      className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Reopen violation if stall returns"
                     >
                       <i className="fas fa-undo"></i>
-                      <span>Reopen Violation (If stall returns)</span>
+                      <span>Reopen Violation</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(report._id)}
+                      disabled={actionLoading === report._id}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Permanently delete from resolved history"
+                    >
+                      <i className="fas fa-trash-alt"></i>
+                      <span>Delete History</span>
                     </button>
                   </div>
                 )}

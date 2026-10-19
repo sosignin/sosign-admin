@@ -186,6 +186,13 @@ export default function DashboardLayout({ children }) {
             badgeKey: "stallDisputes",
         },
         {
+            name: "Resolved Stalls History 📜",
+            href: "/dashboard/resolved-stalls",
+            icon: "fas fa-history",
+            color: "from-emerald-600 to-teal-700",
+            permissionKey: "petitions",
+        },
+        {
             name: "Petition Objections 🚩",
             href: "/dashboard/petition-reports",
             icon: "fas fa-flag",
