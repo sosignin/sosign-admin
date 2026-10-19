@@ -122,6 +122,10 @@ export default function ConsentLogsPage() {
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-teal-100 text-teal-800">Cookie / Tracking</span>;
       case "consent_withdrawal":
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Consent Withdrawn (Sec 6(4))</span>;
+      case "marketing_communications":
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">Civic Milestones & Updates</span>;
+      case "analytics_tracking":
+        return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">Platform Analytics</span>;
       case "data_erasure_request":
         return <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-800">Erasure Consent</span>;
       default:
@@ -241,8 +245,8 @@ export default function ConsentLogsPage() {
             <option value="petition_signature">Petition Signature</option>
             <option value="cookie_banner">Cookie Banner</option>
             <option value="consent_withdrawal">Withdrawals (Sec 6(4))</option>
-            <option value="marketing_communications">Marketing</option>
-            <option value="analytics_tracking">Analytics</option>
+            <option value="marketing_communications">Civic Milestones & Updates</option>
+            <option value="analytics_tracking">Platform Analytics</option>
             <option value="data_erasure_request">Data Erasure</option>
           </select>
 
